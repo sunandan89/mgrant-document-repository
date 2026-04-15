@@ -1,55 +1,29 @@
 frappe.ui.form.on("Document Registry", {
     refresh: function (frm) {
-        // Disable save since this is read-only (index, not source of truth)
+        // Disable save — this is a read-only index, not the source of truth
         frm.disable_save();
 
-        // Hide standard Frappe form sections
-        frm.toggle_display(
-            [
-                "details_tab",
-                "file_name",
-                "file_url",
-                "column_break_file",
-                "file_type",
-                "file_extension",
-                "file_size",
-                "file_size_display",
-                "source_section",
-                "source_doctype",
-                "source_name",
-                "source_record_title",
-                "column_break_source",
-                "source_field",
-                "source_category",
-                "context_section",
-                "partner",
-                "partner_name",
-                "project",
-                "project_title",
-                "column_break_context",
-                "donor",
-                "programme",
-                "compliance_section",
-                "document_number",
-                "issuance_date",
-                "column_break_compliance",
-                "expiry_date",
-                "compliance_status",
-                "metadata_section",
-                "uploaded_by",
-                "uploaded_by_name",
-                "column_break_metadata",
-                "upload_date",
-                "frappe_file",
-                "is_private",
-            ],
-            false
-        );
+        // Hide all standard Frappe form fields (NOT the tab itself)
+        var fields_to_hide = [
+            "file_name", "file_url", "column_break_file",
+            "file_type", "file_extension", "file_size", "file_size_display",
+            "source_section", "source_doctype", "source_name",
+            "source_record_title", "column_break_source",
+            "source_field", "source_category",
+            "context_section", "partner", "partner_name",
+            "project", "project_title", "column_break_context",
+            "donor", "programme",
+            "compliance_section", "document_number", "issuance_date",
+            "column_break_compliance", "expiry_date", "compliance_status",
+            "metadata_section", "uploaded_by", "uploaded_by_name",
+            "column_break_metadata", "upload_date", "frappe_file", "is_private"
+        ];
+        frm.toggle_display(fields_to_hide, false);
 
-        // Inject custom card-based layout
+        // Inject the custom card-based layout
         render_custom_form_layout(frm);
 
-        // "Go to Source Record" button
+        // Custom action buttons
         if (frm.doc.source_doctype && frm.doc.source_name) {
             frm.add_custom_button(
                 __("Go to Source Record"),
@@ -61,422 +35,213 @@ frappe.ui.form.on("Document Registry", {
             );
         }
 
-        // "Download File" button
         if (frm.doc.file_url) {
             frm.add_custom_button(__("Download File"), function () {
                 window.open(frm.doc.file_url, "_blank");
             });
         }
 
-        // "Back to List" button
         frm.add_custom_button(__("Back to List"), function () {
             frappe.set_route("List", "Document Registry");
         });
     },
 });
 
-function get_file_icon(file_type) {
-    var icon_map = {
-        PDF: "📄",
-        Document: "📝",
-        Spreadsheet: "📊",
-        Image: "🖼️",
-        Video: "🎬",
-        Presentation: "📽️",
-        Other: "📎",
-    };
-    return icon_map[file_type] || "📎";
+
+// ── Helper functions ──
+
+function esc(val) {
+    if (!val) return "";
+    return $("<span>").text(val).html();
 }
 
-function get_badge_color(value, type) {
-    var colors = {
+function get_file_icon(file_type) {
+    var map = {
+        PDF: "📄", Document: "📝", Spreadsheet: "📊",
+        Image: "🖼️", Video: "🎬", Presentation: "📽️", Other: "📎"
+    };
+    return map[file_type] || "📎";
+}
+
+function badge_html(label, type) {
+    if (!label) return '<span style="color:#999;">—</span>';
+    var palettes = {
         file_type: {
-            PDF: "#e8f0fe|#1a56db",
-            Document: "#e8f0fe|#1a56db",
-            Spreadsheet: "#fef3e2|#b45309",
-            Image: "#e6f4ea|#137333",
-            Video: "#f3e8ff|#7c3aed",
-            Presentation: "#e6f4ea|#137333",
-            Other: "#f3f3f3|#666666",
+            PDF: "#e8f0fe|#1a56db", Document: "#e8f0fe|#1a56db",
+            Spreadsheet: "#fef3e2|#b45309", Image: "#e6f4ea|#137333",
+            Video: "#f3e8ff|#7c3aed", Presentation: "#e6f4ea|#137333"
         },
         source_category: {
-            Financial: "#e8f0fe|#1a56db",
-            Documents: "#e6f4ea|#137333",
-            Details: "#e6f4ea|#137333",
-            Fund: "#f3e8ff|#7c3aed",
+            Details: "#e6f4ea|#137333", Documents: "#e6f4ea|#137333",
+            "Due Diligence": "#fef3e2|#b45309",
+            "Fund Request & Disbursement": "#f3e8ff|#7c3aed",
+            "Budget Report": "#e8f0fe|#1a56db",
+            Utilisation: "#f3e8ff|#7c3aed", Reporting: "#fef3e2|#b45309",
+            Files: "#f3f3f3|#666", "Bank Details": "#f3f3f3|#666"
         },
         compliance_status: {
-            Active: "#e6f4ea|#137333",
-            Expired: "#fee2e2|#991b1b",
-            Pending: "#fef3e2|#b45309",
-            Rejected: "#fee2e2|#991b1b",
-            NA: "#f3f3f3|#666666",
-        },
+            Active: "#e6f4ea|#137333", Expired: "#fee2e2|#991b1b",
+            Pending: "#fef3e2|#b45309", Rejected: "#fee2e2|#991b1b",
+            NA: "#f3f3f3|#666"
+        }
     };
-
-    var type_colors = colors[type] || {};
-    var color_pair = type_colors[value] || "#f3f3f3|#666666";
-    var parts = color_pair.split("|");
-    return { bg: parts[0], text: parts[1] };
+    var pair = ((palettes[type] || {})[label]) || "#f3f3f3|#666";
+    var p = pair.split("|");
+    return '<span style="display:inline-block;background:' + p[0] +
+        ';color:' + p[1] +
+        ';padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.3px;">' +
+        esc(label) + '</span>';
 }
 
-function render_badge(label, type) {
-    if (!label) return "";
-    var colors = get_badge_color(label, type);
-    return `<span class="badge" style="
-        display: inline-block;
-        background-color: ${colors.bg};
-        color: ${colors.text};
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    ">${__( label)}</span>`;
+function field_row(label, value) {
+    var v = value || '<span style="color:#aaa;">—</span>';
+    return '<div style="margin-bottom:14px;">' +
+        '<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#8d99a6;margin-bottom:4px;">' + esc(label) + '</div>' +
+        '<div style="font-size:13px;color:#1f2937;">' + v + '</div>' +
+        '</div>';
 }
 
-function render_form_field(label, value, is_link, link_doctype, link_field) {
-    if (!value) {
-        return `<div class="form-field">
-            <div class="field-label">${label}</div>
-            <div class="field-value" style="color: #999;">—</div>
-        </div>`;
-    }
-
-    var display_value = value;
-    if (is_link && link_doctype && link_field) {
-        display_value = `<a href="/app/${frappe.router.slug(link_doctype)}/${link_field}" style="color: #1a56db; text-decoration: none; font-weight: 500;">${frappe.utils.get_form_link_html(link_doctype, link_field, true, value)}</a>`;
-    }
-
-    return `<div class="form-field">
-        <div class="field-label">${label}</div>
-        <div class="field-value">${display_value}</div>
-    </div>`;
+function link_html(doctype, name, display) {
+    if (!name) return '<span style="color:#aaa;">—</span>';
+    var slug = doctype.toLowerCase().replace(/ /g, "-");
+    var text = display || name;
+    return '<a href="/app/' + slug + '/' + encodeURIComponent(name) +
+        '" style="color:#2b5ea7;text-decoration:none;font-weight:500;">' + esc(text) + '</a>';
 }
+
+function card_html(icon, title, body_html) {
+    return '<div style="background:#fff;border:1px solid #e4e4e4;border-radius:8px;margin-bottom:16px;overflow:hidden;">' +
+        '<div class="dr-card-hdr" style="background:#fafbfc;padding:12px 16px;border-bottom:1px solid #e4e4e4;display:flex;align-items:center;font-weight:600;color:#374151;font-size:13px;cursor:pointer;">' +
+        '<span style="margin-right:8px;">' + icon + '</span>' +
+        '<span>' + title + '</span>' +
+        '<span class="dr-card-arrow" style="margin-left:auto;transition:transform 0.2s;">▾</span>' +
+        '</div>' +
+        '<div class="dr-card-body" style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;">' +
+        body_html +
+        '</div></div>';
+}
+
 
 function render_custom_form_layout(frm) {
     var doc = frm.doc;
 
-    // Remove any previously injected custom layout
-    $(frm.layout.wrapper).find(".custom-form-layout").remove();
+    // Remove any previously injected layout (avoid duplicates on re-render)
+    $(frm.page.main).find(".dr-custom-layout").remove();
 
-    var html = `<div class="custom-form-layout" style="
-        padding: 16px 0;
-        background: #fff;
-    ">
-        <!-- File Preview Box -->
-        <div class="file-preview-box" style="
-            border: 2px dashed #e5e7eb;
-            border-radius: 8px;
-            padding: 32px;
-            text-align: center;
-            margin-bottom: 24px;
-            background: #fafafa;
-        ">
-            <div style="font-size: 48px; margin-bottom: 12px;">
-                ${get_file_icon(doc.file_type || "Other")}
-            </div>
-            <div style="
-                font-size: 16px;
-                font-weight: 600;
-                color: #1f2937;
-                margin-bottom: 8px;
-            ">${frappe.utils.escape_html(doc.file_name || "—")}</div>
-            <div style="
-                font-size: 13px;
-                color: #6b7280;
-            ">
-                ${doc.file_extension ? frappe.utils.escape_html(doc.file_extension.toUpperCase()) : "—"}
-                ${doc.file_size_display ? "• " + frappe.utils.escape_html(doc.file_size_display) : ""}
-                ${doc.upload_date ? "• " + frappe.utils.escape_html(doc.upload_date) : ""}
-            </div>
-        </div>
+    // ── File Preview Box ──
+    var preview = '<div style="background:#f8fafb;border:2px dashed #d8dee4;border-radius:8px;padding:36px;text-align:center;margin-bottom:20px;">' +
+        '<div style="font-size:48px;margin-bottom:10px;">' + get_file_icon(doc.file_type || "Other") + '</div>' +
+        '<div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:6px;">' + esc(doc.file_name || "—") + '</div>' +
+        '<div style="font-size:12.5px;color:#8d99a6;">' +
+            (doc.file_extension ? esc(doc.file_extension.toUpperCase()) : "") +
+            (doc.file_size_display ? " &bull; " + esc(doc.file_size_display) : "") +
+            (doc.upload_date ? " &bull; Uploaded " + esc(doc.upload_date) : "") +
+            (doc.uploaded_by_name ? " by " + esc(doc.uploaded_by_name) : "") +
+        '</div></div>';
 
-        <!-- File Details Card -->
-        <div class="form-card" style="
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        ">
-            <div class="card-header" style="
-                background: #f9fafb;
-                padding: 12px 16px;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                font-weight: 600;
-                color: #374151;
-                font-size: 14px;
-                cursor: pointer;
-            " onclick="toggle_card(this)">
-                <span style="margin-right: 8px;">📋</span>
-                <span>File Details</span>
-                <span style="margin-left: auto; transition: transform 0.2s;">▼</span>
-            </div>
-            <div class="card-content" style="
-                padding: 16px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            ">
-                ${render_form_field("File Name", doc.file_name)}
-                ${render_form_field("File Type", doc.file_type ? render_badge(doc.file_type, "file_type") : "—")}
-                ${render_form_field("Extension", doc.file_extension)}
-                ${render_form_field("File Size", doc.file_size_display)}
-            </div>
-        </div>
+    // ── File Details Card ──
+    var details_body =
+        field_row("File Name", esc(doc.file_name)) +
+        field_row("File Type", badge_html(doc.file_type, "file_type")) +
+        field_row("Extension", esc(doc.file_extension)) +
+        field_row("File Size", esc(doc.file_size_display)) +
+        field_row("Private", doc.is_private ? "Yes" : "No") +
+        field_row("Upload Date", esc(doc.upload_date));
 
-        <!-- Source Card -->
-        <div class="form-card" style="
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        ">
-            <div class="card-header" style="
-                background: #f9fafb;
-                padding: 12px 16px;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                font-weight: 600;
-                color: #374151;
-                font-size: 14px;
-                cursor: pointer;
-            " onclick="toggle_card(this)">
-                <span style="margin-right: 8px;">🔗</span>
-                <span>Source</span>
-                <span style="margin-left: auto; transition: transform 0.2s;">▼</span>
-            </div>
-            <div class="card-content" style="
-                padding: 16px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            ">
-                ${render_form_field("Source Module", doc.source_doctype)}
-                ${render_form_field("Source Record", doc.source_name)}
-                ${render_form_field("Record Title", doc.source_record_title)}
-                ${render_form_field("Source Field", doc.source_field)}
-                ${render_form_field("Category", doc.source_category ? render_badge(doc.source_category, "source_category") : "—")}
-            </div>
-        </div>
+    // ── Source Card ──
+    var source_body =
+        field_row("Source Module", link_html("DocType", doc.source_doctype, doc.source_doctype)) +
+        field_row("Source Record", doc.source_doctype && doc.source_name
+            ? link_html(doc.source_doctype, doc.source_name, doc.source_record_title || doc.source_name)
+            : null) +
+        field_row("Source Field / Tab", esc(doc.source_field)) +
+        field_row("Category", badge_html(doc.source_category, "source_category"));
 
-        <!-- Context Card -->
-        <div class="form-card" style="
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        ">
-            <div class="card-header" style="
-                background: #f9fafb;
-                padding: 12px 16px;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                font-weight: 600;
-                color: #374151;
-                font-size: 14px;
-                cursor: pointer;
-            " onclick="toggle_card(this)">
-                <span style="margin-right: 8px;">🏢</span>
-                <span>Context</span>
-                <span style="margin-left: auto; transition: transform 0.2s;">▼</span>
-            </div>
-            <div class="card-content" style="
-                padding: 16px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            ">
-                ${
-                    doc.partner
-                        ? `<div class="form-field">
-                    <div class="field-label">Partner / NGO</div>
-                    <div class="field-value"><a href="/app/ngo/${doc.partner}" style="color: #1a56db; text-decoration: none; font-weight: 500;">${frappe.utils.escape_html(doc.partner_name || doc.partner)}</a></div>
-                </div>`
-                        : render_form_field("Partner / NGO", null)
-                }
-                ${
-                    doc.project
-                        ? `<div class="form-field">
-                    <div class="field-label">Project</div>
-                    <div class="field-value"><a href="/app/project/${doc.project}" style="color: #1a56db; text-decoration: none; font-weight: 500;">${frappe.utils.escape_html(doc.project_title || doc.project)}</a></div>
-                </div>`
-                        : render_form_field("Project", null)
-                }
-                ${
-                    doc.donor
-                        ? `<div class="form-field">
-                    <div class="field-label">Donor</div>
-                    <div class="field-value"><a href="/app/donor/${doc.donor}" style="color: #1a56db; text-decoration: none; font-weight: 500;">${frappe.utils.escape_html(doc.donor)}</a></div>
-                </div>`
-                        : render_form_field("Donor", null)
-                }
-                ${
-                    doc.programme
-                        ? `<div class="form-field">
-                    <div class="field-label">Programme</div>
-                    <div class="field-value"><a href="/app/programme/${doc.programme}" style="color: #1a56db; text-decoration: none; font-weight: 500;">${frappe.utils.escape_html(doc.programme)}</a></div>
-                </div>`
-                        : render_form_field("Programme", null)
-                }
-            </div>
-        </div>
+    // ── Context Card ──
+    var context_body =
+        field_row("Partner / NGO", link_html("NGO", doc.partner, doc.partner_name || doc.partner)) +
+        field_row("Project", link_html("Project", doc.project, doc.project_title || doc.project)) +
+        field_row("Donor", link_html("Donor", doc.donor, doc.donor)) +
+        field_row("Programme", link_html("Programme", doc.programme, doc.programme));
 
-        <!-- Compliance Card -->
-        <div class="form-card" style="
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        ">
-            <div class="card-header" style="
-                background: #f9fafb;
-                padding: 12px 16px;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                font-weight: 600;
-                color: #374151;
-                font-size: 14px;
-                cursor: pointer;
-            " onclick="toggle_card(this)">
-                <span style="margin-right: 8px;">✓</span>
-                <span>Compliance</span>
-                <span style="margin-left: auto; transition: transform 0.2s;">▼</span>
-            </div>
-            <div class="card-content" style="
-                padding: 16px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            ">
-                ${render_form_field("Document Number", doc.document_number)}
-                ${render_form_field("Issuance Date", doc.issuance_date)}
-                ${render_form_field("Expiry Date", doc.expiry_date)}
-                ${render_form_field("Compliance Status", doc.compliance_status ? render_badge(doc.compliance_status, "compliance_status") : "—")}
-            </div>
-        </div>
+    // ── Compliance Card ──
+    var compliance_body =
+        field_row("Document Number", esc(doc.document_number)) +
+        field_row("Compliance Status", badge_html(doc.compliance_status, "compliance_status")) +
+        field_row("Issuance Date", esc(doc.issuance_date)) +
+        field_row("Expiry Date", esc(doc.expiry_date));
 
-        <!-- Metadata Card -->
-        <div class="form-card" style="
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        ">
-            <div class="card-header" style="
-                background: #f9fafb;
-                padding: 12px 16px;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                font-weight: 600;
-                color: #374151;
-                font-size: 14px;
-                cursor: pointer;
-            " onclick="toggle_card(this)">
-                <span style="margin-right: 8px;">ℹ️</span>
-                <span>Metadata</span>
-                <span style="margin-left: auto; transition: transform 0.2s;">▼</span>
-            </div>
-            <div class="card-content" style="
-                padding: 16px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            ">
-                ${render_form_field("Uploaded By", doc.uploaded_by_name || doc.uploaded_by)}
-                ${render_form_field("Upload Date", doc.upload_date)}
-                ${render_form_field("Private", doc.is_private ? "Yes" : "No")}
-                ${render_form_field("Frappe File ID", doc.frappe_file)}
-            </div>
-        </div>
+    // ── Metadata Card ──
+    var metadata_body =
+        field_row("Uploaded By", esc(doc.uploaded_by_name || doc.uploaded_by)) +
+        field_row("Upload Date", esc(doc.upload_date)) +
+        field_row("Private", doc.is_private ? "Yes" : "No") +
+        field_row("Frappe File ID", doc.frappe_file
+            ? '<span style="font-family:monospace;font-size:12px;color:#6b7280;">' + esc(doc.frappe_file) + '</span>'
+            : null);
 
-        <style>
-            .form-field {
-                display: flex;
-                flex-direction: column;
-            }
-            .field-label {
-                font-size: 11px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                color: #6b7280;
-                margin-bottom: 6px;
-            }
-            .field-value {
-                font-size: 14px;
-                color: #1f2937;
-                word-break: break-word;
-            }
-        </style>
-    </div>`;
+    // ── Assemble full layout ──
+    var full_html = '<div class="dr-custom-layout" style="padding:20px 0;">' +
+        preview +
+        card_html("📋", "File Details", details_body) +
+        card_html("🔗", "Source", source_body) +
+        card_html("🏢", "Context", context_body) +
+        card_html("🛡", "Compliance", compliance_body) +
+        card_html("📊", "Metadata", metadata_body) +
+        '</div>';
 
-    // Inject custom layout before form sections
-    $(frm.layout.wrapper).find(".layout-main-section").prepend(html);
-}
-
-function toggle_card(header_elem) {
-    var content = $(header_elem).nextAll(".card-content").first();
-    var arrow = $(header_elem).find("span:last");
-
-    if (content.is(":visible")) {
-        content.slideUp(200);
-        arrow.css("transform", "rotate(-90deg)");
-    } else {
-        content.slideDown(200);
-        arrow.css("transform", "rotate(0deg)");
+    // Inject into the form — try multiple selectors for Frappe v15/v16 compatibility
+    var $target = $(frm.page.main).find(".form-layout");
+    if (!$target.length) {
+        $target = $(frm.layout.wrapper);
     }
+    if (!$target.length) {
+        $target = $(frm.page.main);
+    }
+    $target.prepend(full_html);
+
+    // Bind card collapse/expand
+    $(frm.page.main).find(".dr-card-hdr").on("click", function () {
+        var $body = $(this).next(".dr-card-body");
+        var $arrow = $(this).find(".dr-card-arrow");
+        if ($body.is(":visible")) {
+            $body.slideUp(200);
+            $arrow.css("transform", "rotate(-90deg)");
+        } else {
+            $body.slideDown(200);
+            $arrow.css("transform", "rotate(0deg)");
+        }
+    });
 }
 
-// List View settings
+
+// ── List View Settings ──
+
 frappe.listview_settings["Document Registry"] = {
     add_fields: ["file_type", "compliance_status", "source_category"],
 
     get_indicator: function (doc) {
-        // Compliance expired takes priority
         if (doc.compliance_status === "Expired") {
             return [__("Expired"), "red", "compliance_status,=,Expired"];
         }
-
-        // File type indicators
         var type_map = {
-            PDF: ["PDF", "blue"],
-            Document: ["Document", "blue"],
-            Spreadsheet: ["Spreadsheet", "orange"],
-            Image: ["Image", "green"],
-            Video: ["Video", "purple"],
-            Presentation: ["Presentation", "cyan"],
+            PDF: ["PDF", "blue"], Document: ["Document", "blue"],
+            Spreadsheet: ["Spreadsheet", "orange"], Image: ["Image", "green"],
+            Video: ["Video", "purple"], Presentation: ["Presentation", "cyan"]
         };
-
         if (type_map[doc.file_type]) {
-            return [
-                __(type_map[doc.file_type][0]),
-                type_map[doc.file_type][1],
-                "file_type,=," + doc.file_type,
-            ];
+            return [__(type_map[doc.file_type][0]), type_map[doc.file_type][1],
+                "file_type,=," + doc.file_type];
         }
-
         return [__("Other"), "grey", "file_type,=,Other"];
     },
 
     formatters: {
         file_name: function (value, field, doc) {
             if (value && doc.file_url) {
-                return `<a href="${doc.file_url}" target="_blank" title="Click to download">${value}</a>`;
+                return '<a href="' + doc.file_url + '" target="_blank" title="Click to download">' + value + '</a>';
             }
             return value;
-        },
-    },
+        }
+    }
 };
