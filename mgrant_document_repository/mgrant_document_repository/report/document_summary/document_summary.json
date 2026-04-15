@@ -1,0 +1,70 @@
+{
+  "add_total_row": 0,
+  "creation": "2026-04-15 00:00:00.000000",
+  "docstatus": 0,
+  "doctype": "Report",
+  "disabled": 0,
+  "doc_type": "Document Registry",
+  "email_report_to": [],
+  "filters": [
+    {
+      "fieldname": "source_doctype",
+      "fieldtype": "Link",
+      "label": "Source DocType",
+      "options": "DocType"
+    },
+    {
+      "fieldname": "partner",
+      "fieldtype": "Link",
+      "label": "Partner",
+      "options": "NGO"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "Project"
+    },
+    {
+      "fieldname": "file_type",
+      "fieldtype": "Select",
+      "label": "File Type",
+      "options": "PDF\nDocument\nSpreadsheet\nImage\nVideo\nPresentation\nOther"
+    },
+    {
+      "fieldname": "compliance_status",
+      "fieldtype": "Select",
+      "label": "Compliance Status",
+      "options": "Active\nExpired\nPending\nRejected\nNA"
+    },
+    {
+      "fieldname": "source_category",
+      "fieldtype": "Data",
+      "label": "Source Category"
+    },
+    {
+      "fieldname": "from_date",
+      "fieldtype": "Date",
+      "label": "From Date"
+    },
+    {
+      "fieldname": "to_date",
+      "fieldtype": "Date",
+      "label": "To Date"
+    }
+  ],
+  "is_standard": "No",
+  "idx": 0,
+  "modified": "2026-04-15 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "mGrant - Document Repository",
+  "name": "Document Summary",
+  "owner": "Administrator",
+  "query_report": 0,
+  "ref_doctype": "Document Registry",
+  "report_name": "Document Summary",
+  "report_type": "Script Report",
+  "roles": [],
+  "show_in_menu": 1,
+  "standard": "No"
+}

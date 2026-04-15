@@ -11,8 +11,9 @@ Creates:
     - Document Registry (main DocType)
     - 25 default category mappings
     - Server Scripts (file sync on insert, cleanup on delete, RLS permission query)
-    - Client Scripts (form view buttons, list view indicators)
-    - Custom HTML Block (Document Repository UI)
+    - Client Scripts (enhanced card-based form view, list view indicators)
+    - Script Report: Document Summary (with 8 filters)
+    - Custom HTML Block (Document Repository UI with sidebar, search, pagination)
     - Workspace entry with CHB wiring
     - Backfills all existing files from tracked modules
 """
@@ -299,48 +300,99 @@ def create_server_scripts():
 
 
 # ═══════════════════════════════════════════
-# STEP 6: Client Scripts
+# STEP 6: Client Scripts (enhanced form view + list view)
 # ═══════════════════════════════════════════
 def create_client_scripts():
+    # Read the full enhanced client script from file
+    full_js = read_file("mgrant_document_repository/mgrant_document_repository/doctype/document_registry/document_registry.js")
+
     cs_form = {
         "name": "Document Registry - Form", "dt": "Document Registry", "view": "Form",
-        "script": """frappe.ui.form.on("Document Registry", {
-    refresh: function(frm) {
-        if (frm.doc.source_doctype && frm.doc.source_name) {
-            frm.add_custom_button(__("Go to Source Record"), function() {
-                frappe.set_route("Form", frm.doc.source_doctype, frm.doc.source_name);
-            }, null, "primary");
-        }
-        if (frm.doc.file_url) {
-            frm.add_custom_button(__("Download File"), function() {
-                window.open(frm.doc.file_url, "_blank");
-            });
-        }
-        frm.disable_save();
-    }
-});""",
-    }
-    cs_list = {
-        "name": "Document Registry - List", "dt": "Document Registry", "view": "List",
-        "script": """frappe.listview_settings["Document Registry"] = frappe.listview_settings["Document Registry"] || {};
-frappe.listview_settings["Document Registry"].add_fields = ["file_type", "compliance_status", "source_category"];
-frappe.listview_settings["Document Registry"].get_indicator = function(doc) {
-    if (doc.compliance_status === "Expired") return [__("Expired"), "red", "compliance_status,=,Expired"];
-    var map = {"PDF": ["PDF", "blue"], "Document": ["Document", "blue"], "Spreadsheet": ["Spreadsheet", "orange"],
-        "Image": ["Image", "green"], "Video": ["Video", "purple"], "Presentation": ["Presentation", "cyan"]};
-    if (map[doc.file_type]) return [__(map[doc.file_type][0]), map[doc.file_type][1], "file_type,=," + doc.file_type];
-    return [__("Other"), "grey", "file_type,=,Other"];
-};""",
+        "script": full_js,
     }
 
-    for cs in [cs_form, cs_list]:
+    for cs in [cs_form]:
         r = requests.get(f'{BASE}/api/resource/Client Script/{requests.utils.quote(cs["name"])}', headers=HDR)
         if r.status_code == 200 and r.json().get("data"):
-            print(f"  [SKIP] {cs['name']} already exists")
-            continue
-        payload = {"doctype": "Client Script", "enabled": 1, **cs}
-        result = api_post("/api/resource/Client Script", payload)
-        print(f"  [{'OK' if result.get('data') else 'ERROR'}] {cs['name']}")
+            # Update existing
+            result = api_put(f'/api/resource/Client Script/{requests.utils.quote(cs["name"])}',
+                             {"script": cs["script"], "enabled": 1})
+            print(f"  [OK] Updated {cs['name']}")
+        else:
+            payload = {"doctype": "Client Script", "enabled": 1, **cs}
+            result = api_post("/api/resource/Client Script", payload)
+            print(f"  [{'OK' if result.get('data') else 'ERROR'}] {cs['name']}")
+
+
+# ═══════════════════════════════════════════
+# STEP 6b: Script Report - Document Summary
+# ═══════════════════════════════════════════
+def create_script_report():
+    REPORT_NAME = "Document Summary"
+    r = requests.get(f'{BASE}/api/resource/Report/{requests.utils.quote(REPORT_NAME)}', headers=HDR)
+
+    report_script = read_file("mgrant_document_repository/mgrant_document_repository/report/document_summary/document_summary.py")
+    report_js = read_file("mgrant_document_repository/mgrant_document_repository/report/document_summary/document_summary.js")
+
+    filters_json = [
+        {"fieldname": "source_doctype", "fieldtype": "Link", "label": "Source DocType", "options": "DocType"},
+        {"fieldname": "partner", "fieldtype": "Link", "label": "Partner", "options": "NGO"},
+        {"fieldname": "project", "fieldtype": "Link", "label": "Project", "options": "Project"},
+        {"fieldname": "file_type", "fieldtype": "Select", "label": "File Type",
+         "options": "\nPDF\nDocument\nSpreadsheet\nImage\nVideo\nPresentation\nOther"},
+        {"fieldname": "compliance_status", "fieldtype": "Select", "label": "Compliance Status",
+         "options": "\nActive\nExpired\nPending\nRejected\nNA"},
+        {"fieldname": "source_category", "fieldtype": "Data", "label": "Source Category"},
+        {"fieldname": "from_date", "fieldtype": "Date", "label": "From Date"},
+        {"fieldname": "to_date", "fieldtype": "Date", "label": "To Date"},
+    ]
+
+    columns_json = [
+        {"fieldname": "file_name", "label": "File Name", "fieldtype": "Data", "width": 200},
+        {"fieldname": "name", "label": "ID", "fieldtype": "Link", "options": "Document Registry", "width": 130},
+        {"fieldname": "file_type", "label": "File Type", "fieldtype": "Data", "width": 100},
+        {"fieldname": "source_doctype", "label": "Source Module", "fieldtype": "Data", "width": 130},
+        {"fieldname": "source_record_title", "label": "Source Record", "fieldtype": "Data", "width": 150},
+        {"fieldname": "source_category", "label": "Category", "fieldtype": "Data", "width": 120},
+        {"fieldname": "partner_name", "label": "Partner", "fieldtype": "Data", "width": 150},
+        {"fieldname": "project_title", "label": "Project", "fieldtype": "Data", "width": 150},
+        {"fieldname": "compliance_status", "label": "Compliance", "fieldtype": "Data", "width": 100},
+        {"fieldname": "upload_date", "label": "Upload Date", "fieldtype": "Date", "width": 110},
+        {"fieldname": "file_size_display", "label": "Size", "fieldtype": "Data", "width": 80},
+    ]
+
+    payload = {
+        "doctype": "Report",
+        "report_name": REPORT_NAME,
+        "ref_doctype": "Document Registry",
+        "report_type": "Script Report",
+        "is_standard": "No",
+        "module": "Custom",
+        "disabled": 0,
+        "report_script": report_script,
+        "javascript": report_js,
+        "filters": filters_json,
+        "columns": columns_json,
+    }
+
+    # Discover available roles for report access
+    r2 = api_get("/api/resource/Role", {"limit_page_length": 0, "fields": json.dumps(["name"])})
+    available_roles = set()
+    for x in r2.get("data", []):
+        available_roles.add(x["name"])
+
+    report_roles = []
+    for role_name in ["System Manager", "PM", "SPM", "HO Finance", "Partner NGO", "Donor Admin", "mGrant Partnerships"]:
+        if role_name in available_roles:
+            report_roles.append({"role": role_name})
+    payload["roles"] = report_roles
+
+    if r.status_code == 200 and r.json().get("data"):
+        result = api_put(f'/api/resource/Report/{requests.utils.quote(REPORT_NAME)}', payload)
+        print(f"  [OK] Updated Report: {REPORT_NAME}")
+    else:
+        result = api_post("/api/resource/Report", payload)
+        print(f"  [{'OK' if result.get('data') else 'ERROR'}] Report: {REPORT_NAME}")
 
 
 # ═══════════════════════════════════════════
@@ -494,17 +546,21 @@ if __name__ == "__main__":
     print("\n5/8 Creating Server Scripts...")
     create_server_scripts()
 
-    print("\n6/8 Creating Client Scripts...")
+    print("\n6/9 Creating Client Scripts (enhanced form view)...")
     create_client_scripts()
 
-    print("\n7/8 Deploying Custom UI (CHB + Workspace)...")
+    print("\n7/9 Creating Script Report (Document Summary)...")
+    create_script_report()
+
+    print("\n8/9 Deploying Custom UI (CHB + Workspace)...")
     deploy_custom_ui()
 
-    print("\n8/8 Backfilling existing files...")
+    print("\n9/9 Backfilling existing files...")
     backfill_existing_files()
 
     print("\n" + "=" * 60)
     print("DEPLOYMENT COMPLETE!")
     print(f"  Custom UI:   {base}/app/document-repository")
     print(f"  Native List: {base}/app/document-registry")
+    print(f"  Report:      {base}/app/query-report/Document Summary")
     print("=" * 60)
