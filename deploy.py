@@ -12,7 +12,6 @@ Creates:
     - 25 default category mappings
     - Server Scripts (file sync on insert, cleanup on delete, RLS permission query)
     - Client Scripts (enhanced card-based form view, list view indicators)
-    - Script Report: Document Summary (with 8 filters)
     - Custom HTML Block (Document Repository UI with sidebar, search, pagination)
     - Workspace entry with CHB wiring
     - Backfills all existing files from tracked modules
@@ -324,76 +323,6 @@ def create_client_scripts():
             print(f"  [{'OK' if result.get('data') else 'ERROR'}] {cs['name']}")
 
 
-# ═══════════════════════════════════════════
-# STEP 6b: Script Report - Document Summary
-# ═══════════════════════════════════════════
-def create_script_report():
-    REPORT_NAME = "Document Summary"
-    r = requests.get(f'{BASE}/api/resource/Report/{requests.utils.quote(REPORT_NAME)}', headers=HDR)
-
-    report_script = read_file("mgrant_document_repository/mgrant_document_repository/report/document_summary/document_summary.py")
-    report_js = read_file("mgrant_document_repository/mgrant_document_repository/report/document_summary/document_summary.js")
-
-    filters_json = [
-        {"fieldname": "source_doctype", "fieldtype": "Link", "label": "Source DocType", "options": "DocType"},
-        {"fieldname": "partner", "fieldtype": "Link", "label": "Partner", "options": "NGO"},
-        {"fieldname": "project", "fieldtype": "Link", "label": "Project", "options": "Project"},
-        {"fieldname": "file_type", "fieldtype": "Select", "label": "File Type",
-         "options": "\nPDF\nDocument\nSpreadsheet\nImage\nVideo\nPresentation\nOther"},
-        {"fieldname": "compliance_status", "fieldtype": "Select", "label": "Compliance Status",
-         "options": "\nActive\nExpired\nPending\nRejected\nNA"},
-        {"fieldname": "source_category", "fieldtype": "Data", "label": "Source Category"},
-        {"fieldname": "from_date", "fieldtype": "Date", "label": "From Date"},
-        {"fieldname": "to_date", "fieldtype": "Date", "label": "To Date"},
-    ]
-
-    columns_json = [
-        {"fieldname": "file_name", "label": "File Name", "fieldtype": "Data", "width": 200},
-        {"fieldname": "name", "label": "ID", "fieldtype": "Link", "options": "Document Registry", "width": 130},
-        {"fieldname": "file_type", "label": "File Type", "fieldtype": "Data", "width": 100},
-        {"fieldname": "source_doctype", "label": "Source Module", "fieldtype": "Data", "width": 130},
-        {"fieldname": "source_record_title", "label": "Source Record", "fieldtype": "Data", "width": 150},
-        {"fieldname": "source_category", "label": "Category", "fieldtype": "Data", "width": 120},
-        {"fieldname": "partner_name", "label": "Partner", "fieldtype": "Data", "width": 150},
-        {"fieldname": "project_title", "label": "Project", "fieldtype": "Data", "width": 150},
-        {"fieldname": "compliance_status", "label": "Compliance", "fieldtype": "Data", "width": 100},
-        {"fieldname": "upload_date", "label": "Upload Date", "fieldtype": "Date", "width": 110},
-        {"fieldname": "file_size_display", "label": "Size", "fieldtype": "Data", "width": 80},
-    ]
-
-    payload = {
-        "doctype": "Report",
-        "report_name": REPORT_NAME,
-        "ref_doctype": "Document Registry",
-        "report_type": "Script Report",
-        "is_standard": "No",
-        "module": "Custom",
-        "disabled": 0,
-        "report_script": report_script,
-        "javascript": report_js,
-        "filters": filters_json,
-        "columns": columns_json,
-    }
-
-    # Discover available roles for report access
-    r2 = api_get("/api/resource/Role", {"limit_page_length": 0, "fields": json.dumps(["name"])})
-    available_roles = set()
-    for x in r2.get("data", []):
-        available_roles.add(x["name"])
-
-    report_roles = []
-    for role_name in ["System Manager", "PM", "SPM", "HO Finance", "Partner NGO", "Donor Admin", "mGrant Partnerships"]:
-        if role_name in available_roles:
-            report_roles.append({"role": role_name})
-    payload["roles"] = report_roles
-
-    if r.status_code == 200 and r.json().get("data"):
-        result = api_put(f'/api/resource/Report/{requests.utils.quote(REPORT_NAME)}', payload)
-        print(f"  [OK] Updated Report: {REPORT_NAME}")
-    else:
-        result = api_post("/api/resource/Report", payload)
-        print(f"  [{'OK' if result.get('data') else 'ERROR'}] Report: {REPORT_NAME}")
-
 
 # ═══════════════════════════════════════════
 # STEP 7: Custom HTML Block + Workspace
@@ -546,21 +475,17 @@ if __name__ == "__main__":
     print("\n5/8 Creating Server Scripts...")
     create_server_scripts()
 
-    print("\n6/9 Creating Client Scripts (enhanced form view)...")
+    print("\n6/8 Creating Client Scripts (enhanced form view)...")
     create_client_scripts()
 
-    print("\n7/9 Creating Script Report (Document Summary)...")
-    create_script_report()
-
-    print("\n8/9 Deploying Custom UI (CHB + Workspace)...")
+    print("\n7/8 Deploying Custom UI (CHB + Workspace)...")
     deploy_custom_ui()
 
-    print("\n9/9 Backfilling existing files...")
+    print("\n8/8 Backfilling existing files...")
     backfill_existing_files()
 
     print("\n" + "=" * 60)
     print("DEPLOYMENT COMPLETE!")
     print(f"  Custom UI:   {base}/app/document-repository")
     print(f"  Native List: {base}/app/document-registry")
-    print(f"  Report:      {base}/app/query-report/Document Summary")
     print("=" * 60)
