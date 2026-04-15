@@ -9,7 +9,7 @@
     "details_tab",
     "file_name",
     "file_url",
-    "file_preview",
+
     "column_break_file",
     "file_type",
     "file_extension",
@@ -65,12 +65,6 @@
       "label": "File URL",
       "options": "URL",
       "reqd": 1
-    },
-    {
-      "fieldname": "file_preview",
-      "fieldtype": "Image",
-      "label": "Preview",
-      "options": "file_url"
     },
     {
       "fieldname": "column_break_file",
@@ -300,7 +294,7 @@
       "print": 1,
       "read": 1,
       "report": 1,
-      "role": "Programme Manager",
+      "role": "PM",
       "share": 1
     },
     {
@@ -309,7 +303,7 @@
       "print": 1,
       "read": 1,
       "report": 1,
-      "role": "Senior Programme Manager",
+      "role": "SPM",
       "share": 1
     },
     {
@@ -318,14 +312,36 @@
       "print": 1,
       "read": 1,
       "report": 1,
-      "role": "Finance Manager",
+      "role": "HO Finance",
+      "share": 1
+    },
+    {
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Partner NGO"
+    },
+    {
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Donor Admin"
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "mGrant Partnerships",
       "share": 1
     }
   ],
   "sort_field": "upload_date",
   "sort_order": "DESC",
   "title_field": "file_name",
-  "image_field": "file_preview",
   "show_title_field_in_link": 1,
   "track_changes": 1
 }
