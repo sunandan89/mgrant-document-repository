@@ -1,0 +1,88 @@
+<div id="doc-repo-root">
+  <!-- Stats Bar -->
+  <div id="stats-bar">
+    <div class="stats-left">
+      <span id="stat-count" class="stat-item">0 documents</span>
+      <span class="stat-sep">|</span>
+      <span id="stat-size" class="stat-item">Total size: 0 B</span>
+      <span class="stat-sep">|</span>
+      <span id="stat-last" class="stat-item">Last upload: —</span>
+    </div>
+    <div class="stats-right">
+      <input type="text" id="search-input" placeholder="Search files..." />
+      <button id="btn-export" class="btn-action" title="Export">Export</button>
+    </div>
+  </div>
+
+  <!-- Active Filters -->
+  <div id="active-filters"></div>
+
+  <!-- Main Layout -->
+  <div id="main-layout">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <!-- By Module -->
+      <div class="filter-group" data-group="module">
+        <div class="filter-group-header">BY MODULE</div>
+        <div class="filter-group-items">
+          <div class="filter-item active" data-value="">
+            <span class="filter-label">All Modules</span>
+            <span class="filter-count" id="count-module-all"></span>
+          </div>
+          <div id="module-items"></div>
+        </div>
+      </div>
+
+      <!-- By Category -->
+      <div class="filter-group" data-group="category">
+        <div class="filter-group-header">BY CATEGORY</div>
+        <div class="filter-group-items">
+          <div class="filter-item active" data-value="">
+            <span class="filter-label">All Categories</span>
+            <span class="filter-count" id="count-category-all"></span>
+          </div>
+          <div id="category-items"></div>
+        </div>
+      </div>
+
+      <!-- By File Type -->
+      <div class="filter-group" data-group="filetype">
+        <div class="filter-group-header">BY FILE TYPE</div>
+        <div class="filter-group-items">
+          <div class="filter-item active" data-value="">
+            <span class="filter-label">All Types</span>
+            <span class="filter-count" id="count-filetype-all"></span>
+          </div>
+          <div id="filetype-items"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div id="content-area">
+      <!-- Table -->
+      <div id="table-container">
+        <table id="doc-table">
+          <thead>
+            <tr>
+              <th class="col-fname" data-sort="file_name">FILE NAME</th>
+              <th class="col-type" data-sort="file_type">TYPE</th>
+              <th class="col-source" data-sort="source_name">SOURCE RECORD</th>
+              <th class="col-partner" data-sort="partner_name">PARTNER</th>
+              <th class="col-category" data-sort="source_category">CATEGORY</th>
+              <th class="col-date" data-sort="upload_date">UPLOAD DATE</th>
+              <th class="col-size" data-sort="file_size">SIZE</th>
+            </tr>
+          </thead>
+          <tbody id="doc-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div id="pagination">
+        <div id="page-info">Showing 0 - 0 of 0</div>
+        <div id="page-controls"></div>
+      </div>
+    </div>
+  </div>
+</div>
