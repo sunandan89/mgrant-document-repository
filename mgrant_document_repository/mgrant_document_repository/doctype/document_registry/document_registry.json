@@ -1,0 +1,331 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "DOC-REG-.#####",
+  "creation": "2026-04-15 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "details_tab",
+    "file_name",
+    "file_url",
+    "file_preview",
+    "column_break_file",
+    "file_type",
+    "file_extension",
+    "file_size",
+    "file_size_display",
+    "source_section",
+    "source_doctype",
+    "source_name",
+    "source_record_title",
+    "column_break_source",
+    "source_field",
+    "source_category",
+    "context_section",
+    "partner",
+    "partner_name",
+    "project",
+    "project_title",
+    "column_break_context",
+    "donor",
+    "programme",
+    "compliance_section",
+    "document_number",
+    "issuance_date",
+    "column_break_compliance",
+    "expiry_date",
+    "compliance_status",
+    "metadata_section",
+    "uploaded_by",
+    "uploaded_by_name",
+    "column_break_metadata",
+    "upload_date",
+    "frappe_file",
+    "is_private"
+  ],
+  "fields": [
+    {
+      "fieldname": "details_tab",
+      "fieldtype": "Tab Break",
+      "label": "Details"
+    },
+    {
+      "fieldname": "file_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "in_standard_filter": 0,
+      "label": "File Name",
+      "reqd": 1,
+      "bold": 1
+    },
+    {
+      "fieldname": "file_url",
+      "fieldtype": "Data",
+      "label": "File URL",
+      "options": "URL",
+      "reqd": 1
+    },
+    {
+      "fieldname": "file_preview",
+      "fieldtype": "Image",
+      "label": "Preview",
+      "options": "file_url"
+    },
+    {
+      "fieldname": "column_break_file",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "file_type",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "File Type",
+      "options": "\nPDF\nDocument\nSpreadsheet\nImage\nVideo\nPresentation\nOther",
+      "reqd": 1
+    },
+    {
+      "fieldname": "file_extension",
+      "fieldtype": "Data",
+      "label": "Extension"
+    },
+    {
+      "fieldname": "file_size",
+      "fieldtype": "Int",
+      "hidden": 1,
+      "label": "File Size (bytes)"
+    },
+    {
+      "fieldname": "file_size_display",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "File Size",
+      "read_only": 1
+    },
+    {
+      "fieldname": "source_section",
+      "fieldtype": "Section Break",
+      "label": "Source"
+    },
+    {
+      "fieldname": "source_doctype",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Source Module",
+      "options": "DocType",
+      "reqd": 1
+    },
+    {
+      "fieldname": "source_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Source Record",
+      "options": "source_doctype",
+      "reqd": 1
+    },
+    {
+      "fieldname": "source_record_title",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Record Title",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_source",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "source_field",
+      "fieldtype": "Data",
+      "label": "Source Field/Tab"
+    },
+    {
+      "fieldname": "source_category",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Category",
+      "bold": 1
+    },
+    {
+      "fieldname": "context_section",
+      "fieldtype": "Section Break",
+      "label": "Context"
+    },
+    {
+      "fieldname": "partner",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Partner / NGO",
+      "options": "NGO"
+    },
+    {
+      "fieldname": "partner_name",
+      "fieldtype": "Data",
+      "fetch_from": "partner.ngo_name",
+      "label": "Partner Name",
+      "read_only": 1
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "in_standard_filter": 1,
+      "label": "Project",
+      "options": "Project"
+    },
+    {
+      "fieldname": "project_title",
+      "fieldtype": "Data",
+      "label": "Project Title",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_context",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "donor",
+      "fieldtype": "Link",
+      "in_standard_filter": 1,
+      "label": "Donor",
+      "options": "Donor"
+    },
+    {
+      "fieldname": "programme",
+      "fieldtype": "Link",
+      "label": "Programme",
+      "options": "Programme"
+    },
+    {
+      "fieldname": "compliance_section",
+      "fieldtype": "Section Break",
+      "collapsible": 1,
+      "label": "Compliance"
+    },
+    {
+      "fieldname": "document_number",
+      "fieldtype": "Data",
+      "label": "Document Number"
+    },
+    {
+      "fieldname": "issuance_date",
+      "fieldtype": "Date",
+      "label": "Issuance Date"
+    },
+    {
+      "fieldname": "column_break_compliance",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "expiry_date",
+      "fieldtype": "Date",
+      "label": "Expiry Date"
+    },
+    {
+      "fieldname": "compliance_status",
+      "fieldtype": "Select",
+      "in_standard_filter": 1,
+      "label": "Compliance Status",
+      "options": "\nActive\nExpired\nPending\nRejected\nNA",
+      "default": "NA"
+    },
+    {
+      "fieldname": "metadata_section",
+      "fieldtype": "Section Break",
+      "collapsible": 1,
+      "label": "Metadata"
+    },
+    {
+      "fieldname": "uploaded_by",
+      "fieldtype": "Link",
+      "in_standard_filter": 1,
+      "label": "Uploaded By",
+      "options": "User"
+    },
+    {
+      "fieldname": "uploaded_by_name",
+      "fieldtype": "Data",
+      "label": "Uploaded By Name",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_metadata",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "upload_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Upload Date"
+    },
+    {
+      "fieldname": "frappe_file",
+      "fieldtype": "Link",
+      "label": "Frappe File ID",
+      "options": "File",
+      "reqd": 1
+    },
+    {
+      "fieldname": "is_private",
+      "fieldtype": "Check",
+      "label": "Private"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "modified": "2026-04-15 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "mGrant - Document Repository",
+  "name": "Document Registry",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Programme Manager",
+      "share": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Senior Programme Manager",
+      "share": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Finance Manager",
+      "share": 1
+    }
+  ],
+  "sort_field": "upload_date",
+  "sort_order": "DESC",
+  "title_field": "file_name",
+  "image_field": "file_preview",
+  "show_title_field_in_link": 1,
+  "track_changes": 1
+}

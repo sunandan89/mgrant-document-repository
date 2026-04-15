@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central Document Repository — Wireframe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #f4f5f6; color: #1a1a1a; font-size: 13px; }
+
+  /* ── Frappe Navbar ── */
+  .navbar { background: #7b1a1a; height: 48px; display: flex; align-items: center; padding: 0 16px; position: sticky; top: 0; z-index: 100; }
+  .navbar-brand { color: #fff; font-weight: 600; font-size: 14px; margin-right: 24px; }
+  .navbar-breadcrumb { color: rgba(255,255,255,0.7); font-size: 12px; }
+  .navbar-breadcrumb span { color: #fff; }
+  .navbar-search { margin-left: auto; background: rgba(255,255,255,0.15); border: none; border-radius: 6px; padding: 6px 14px; color: #fff; font-size: 12px; width: 260px; }
+  .navbar-search::placeholder { color: rgba(255,255,255,0.5); }
+  .navbar-icons { display: flex; gap: 12px; margin-left: 16px; }
+  .navbar-icons .icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; cursor: pointer; }
+  .navbar-icons .avatar { background: #d4a574; font-weight: 600; font-size: 11px; }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: calc(100vh - 48px); }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 240px; background: #fff; border-right: 1px solid #e4e4e4; padding: 16px 0; flex-shrink: 0; overflow-y: auto; }
+  .sidebar-section { padding: 0 16px; margin-bottom: 20px; }
+  .sidebar-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #8d99a6; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .sidebar-item { display: flex; align-items: center; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 12.5px; color: #4a4a4a; gap: 8px; margin-bottom: 1px; }
+  .sidebar-item:hover { background: #f4f5f6; }
+  .sidebar-item.active { background: #fdf0f0; color: #7b1a1a; font-weight: 600; }
+  .sidebar-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .sidebar-item .count { margin-left: auto; font-size: 11px; color: #8d99a6; background: #f0f0f0; padding: 1px 6px; border-radius: 10px; }
+  .sidebar-divider { height: 1px; background: #e8e8e8; margin: 12px 16px; }
+
+  /* ── Main Content ── */
+  .main { flex: 1; padding: 0; overflow-x: hidden; }
+
+  /* ── Page Header ── */
+  .page-header { background: #fff; border-bottom: 1px solid #e4e4e4; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .page-actions { display: flex; gap: 8px; }
+  .btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #d1d1d1; background: #fff; color: #4a4a4a; display: flex; align-items: center; gap: 4px; }
+  .btn:hover { background: #f7f7f7; }
+  .btn-primary { background: #7b1a1a; color: #fff; border-color: #7b1a1a; }
+  .btn-primary:hover { background: #611515; }
+
+  /* ── Filter Bar ── */
+  .filter-bar { background: #fff; padding: 10px 24px; border-bottom: 1px solid #e4e4e4; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-tag { display: flex; align-items: center; gap: 4px; background: #f0f4ff; border: 1px solid #c5d5f0; border-radius: 14px; padding: 3px 10px; font-size: 11px; color: #2b5ea7; }
+  .filter-tag .remove { cursor: pointer; font-weight: 700; margin-left: 2px; color: #7a9ed4; }
+  .add-filter { color: #8d99a6; font-size: 12px; cursor: pointer; border: 1px dashed #ccc; border-radius: 14px; padding: 3px 10px; }
+  .add-filter:hover { border-color: #999; color: #666; }
+  .search-box { margin-left: auto; position: relative; }
+  .search-box input { border: 1px solid #d1d1d1; border-radius: 6px; padding: 5px 10px 5px 28px; font-size: 12px; width: 200px; }
+  .search-box::before { content: "🔍"; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; }
+
+  /* ── Stats Bar ── */
+  .stats-bar { background: #fafbfc; padding: 8px 24px; border-bottom: 1px solid #e4e4e4; display: flex; align-items: center; gap: 24px; font-size: 12px; color: #8d99a6; }
+  .stats-bar .stat-num { font-weight: 600; color: #4a4a4a; }
+
+  /* ── List View ── */
+  .list-view { padding: 0 24px; }
+  .list-header { display: grid; grid-template-columns: 36px 2.5fr 1fr 1.5fr 1.2fr 1.2fr 1fr 0.8fr; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8d99a6; letter-spacing: 0.3px; border-bottom: 1px solid #e4e4e4; background: #fafbfc; position: sticky; top: 0; }
+  .list-row { display: grid; grid-template-columns: 36px 2.5fr 1fr 1.5fr 1.2fr 1.2fr 1fr 0.8fr; padding: 11px 12px; border-bottom: 1px solid #f0f0f0; align-items: center; cursor: pointer; background: #fff; transition: background 0.1s; }
+  .list-row:hover { background: #f8f9fa; }
+  .list-row .checkbox { width: 15px; height: 15px; border: 1.5px solid #c1c1c1; border-radius: 3px; cursor: pointer; }
+  .list-row .filename { font-weight: 500; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .list-row .meta { color: #6c7680; font-size: 12px; }
+  .file-icon { display: inline-flex; align-items: center; gap: 6px; }
+  .file-icon .icon-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 500; }
+  .badge-blue { background: #e8f0fe; color: #1a56db; }
+  .badge-green { background: #e6f4ea; color: #137333; }
+  .badge-orange { background: #fef3e2; color: #b45309; }
+  .badge-red { background: #fde8e8; color: #c81e1e; }
+  .badge-gray { background: #f0f0f0; color: #666; }
+  .badge-purple { background: #f3e8ff; color: #7c3aed; }
+
+  /* ── Pagination ── */
+  .pagination { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; background: #fff; border-top: 1px solid #e4e4e4; font-size: 12px; color: #8d99a6; }
+  .pagination-btns { display: flex; gap: 4px; }
+  .pagination-btns .pg { padding: 4px 10px; border: 1px solid #d1d1d1; border-radius: 4px; cursor: pointer; background: #fff; }
+  .pagination-btns .pg.active { background: #7b1a1a; color: #fff; border-color: #7b1a1a; }
+
+  /* ── View Tabs ── */
+  .view-tabs { display: flex; gap: 0; background: #fff; padding: 0 24px; border-bottom: 1px solid #e4e4e4; }
+  .view-tab { padding: 10px 16px; font-size: 12px; color: #8d99a6; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; }
+  .view-tab.active { color: #7b1a1a; border-bottom-color: #7b1a1a; font-weight: 600; }
+  .view-tab:hover { color: #4a4a4a; }
+
+  /* ── Form View (Screen 2) ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .screen-nav { display: flex; gap: 8px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e4e4e4; }
+  .screen-nav .btn { font-size: 12px; }
+
+  .form-container { padding: 24px; max-width: 960px; }
+  .form-card { background: #fff; border: 1px solid #e4e4e4; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  .form-card-header { background: #fafbfc; padding: 12px 16px; border-bottom: 1px solid #e4e4e4; font-weight: 600; font-size: 13px; color: #4a4a4a; display: flex; align-items: center; gap: 8px; }
+  .form-card-body { padding: 16px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-field { }
+  .form-field label { display: block; font-size: 11px; font-weight: 600; color: #8d99a6; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+  .form-field .value { font-size: 13px; color: #1a1a1a; padding: 6px 0; }
+  .form-field .value a { color: #2b5ea7; text-decoration: none; }
+  .form-field .value a:hover { text-decoration: underline; }
+  .form-field.full { grid-column: 1 / -1; }
+
+  .file-preview-box { background: #f8fafb; border: 2px dashed #d8dee4; border-radius: 8px; padding: 40px; text-align: center; margin-bottom: 16px; }
+  .file-preview-box .file-icon-large { font-size: 48px; margin-bottom: 12px; }
+  .file-preview-box .file-name { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .file-preview-box .file-meta { font-size: 12px; color: #8d99a6; }
+
+  .breadcrumb-trail { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8d99a6; padding: 8px 0; flex-wrap: wrap; }
+  .breadcrumb-trail a { color: #2b5ea7; text-decoration: none; }
+  .breadcrumb-trail .sep { color: #c1c1c1; }
+
+  /* ── Screen Switcher ── */
+  .wireframe-switcher { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; gap: 8px; }
+  .wireframe-switcher .sw-btn { padding: 10px 20px; background: #7b1a1a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .wireframe-switcher .sw-btn.inactive { background: #fff; color: #4a4a4a; border: 1px solid #d1d1d1; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .wireframe-switcher .sw-btn:hover { opacity: 0.9; }
+
+  .wireframe-label { position: fixed; top: 56px; left: 50%; transform: translateX(-50%); z-index: 200; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 4px 16px; border-radius: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
+</style>
+</head>
+<body>
+
+<div class="wireframe-label">WIREFRAME — Central Document Repository</div>
+
+<!-- ── Screen Switcher ── -->
+<div class="wireframe-switcher">
+  <button class="sw-btn" onclick="showScreen('list')">List View</button>
+  <button class="sw-btn inactive" onclick="showScreen('form')">Form View</button>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- NAVBAR -->
+<!-- ══════════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="navbar-brand">mGrant</div>
+  <div class="navbar-breadcrumb">Document Repository &rsaquo; <span>List</span></div>
+  <input class="navbar-search" placeholder="Search or type a command (⌘ + K)" />
+  <div class="navbar-icons">
+    <div class="icon">🔔</div>
+    <div class="icon">?</div>
+    <div class="icon avatar">SD</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SCREEN 1: LIST VIEW -->
+<!-- ══════════════════════════════════════════ -->
+<div class="screen active" id="screen-list">
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">By Module</div>
+      <div class="sidebar-item"><div class="dot" style="background:#2b5ea7"></div> All Modules <span class="count">1,247</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#7c3aed"></div> NGO <span class="count">423</span></div>
+      <div class="sidebar-item active"><div class="dot" style="background:#059669"></div> Grant <span class="count">312</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#d97706"></div> Project <span class="count">198</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#dc2626"></div> Fund Request <span class="count">156</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#0891b2"></div> Proposal <span class="count">89</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#6b7280"></div> Vendor <span class="count">45</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#be185d"></div> NGO Due Diligence <span class="count">24</span></div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">By Category</div>
+      <div class="sidebar-item"><div class="dot" style="background:#8d99a6"></div> All Categories</div>
+      <div class="sidebar-item"><div class="dot" style="background:#2563eb"></div> Details <span class="count">87</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#059669"></div> Documents <span class="count">198</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#7c3aed"></div> Due Diligence <span class="count">142</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#d97706"></div> Fund Request & Disbursement <span class="count">156</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#0891b2"></div> Budget Report <span class="count">112</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#dc2626"></div> Utilisation <span class="count">98</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#be185d"></div> Reporting <span class="count">76</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#6b7280"></div> Files <span class="count">234</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#4b5563"></div> Bank Details <span class="count">34</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#92400e"></div> RFP <span class="count">12</span></div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">By File Type</div>
+      <div class="sidebar-item"><div class="dot" style="background:#dc2626"></div> PDF <span class="count">456</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#059669"></div> Image <span class="count">312</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#d97706"></div> Spreadsheet <span class="count">198</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#2563eb"></div> Document <span class="count">156</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#7c3aed"></div> Video <span class="count">23</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#6b7280"></div> Other <span class="count">102</span></div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Compliance Status</div>
+      <div class="sidebar-item"><div class="dot" style="background:#059669"></div> Active <span class="count">189</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#dc2626"></div> Expired <span class="count">23</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#d97706"></div> Pending <span class="count">14</span></div>
+      <div class="sidebar-item"><div class="dot" style="background:#6b7280"></div> NA <span class="count">1,021</span></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">Document Repository</div>
+      <div class="page-actions">
+        <button class="btn">⬇ Export</button>
+        <button class="btn">⚙ Settings</button>
+      </div>
+    </div>
+
+    <!-- View Tabs -->
+    <div class="view-tabs">
+      <div class="view-tab active">List View</div>
+      <div class="view-tab">Report Builder</div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-tag">Module = Grant <span class="remove">&times;</span></div>
+      <div class="filter-tag">File Type = PDF <span class="remove">&times;</span></div>
+      <div class="add-filter">+ Add Filter</div>
+      <div class="search-box">
+        <input placeholder="Search files..." />
+      </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <span><span class="stat-num">312</span> documents</span>
+      <span>|</span>
+      <span>Total size: <span class="stat-num">1.2 GB</span></span>
+      <span>|</span>
+      <span>Last upload: <span class="stat-num">2 hours ago</span></span>
+    </div>
+
+    <!-- List -->
+    <div class="list-view">
+      <div class="list-header">
+        <div>☐</div>
+        <div>File Name</div>
+        <div>Type</div>
+        <div>Source Record</div>
+        <div>Partner</div>
+        <div>Category</div>
+        <div>Upload Date</div>
+        <div>Size</div>
+      </div>
+
+      <div class="list-row" onclick="showScreen('form')">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#dc2626"></span> Grant_Agreement_Relax_Program.pdf</div>
+        <div class="meta"><span class="badge badge-blue">PDF</span></div>
+        <div class="meta"><a href="#">relax program - Year 1</a></div>
+        <div class="meta">Saathi Foundation</div>
+        <div class="meta"><span class="badge badge-green">Details</span></div>
+        <div class="meta">15 Jan 2026</div>
+        <div class="meta">2.4 MB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#d97706"></span> Quarterly_FU_Reporting_12b7aea.xlsx</div>
+        <div class="meta"><span class="badge badge-orange">Spreadsheet</span></div>
+        <div class="meta"><a href="#">relax program - Year 1</a></div>
+        <div class="meta">Saathi Foundation</div>
+        <div class="meta"><span class="badge badge-purple">Fund Request & Disbursement</span></div>
+        <div class="meta">15 Jan 2026</div>
+        <div class="meta">7.92 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#059669"></span> Site_Visit_Photos_Jan2026.jpg</div>
+        <div class="meta"><span class="badge badge-green">Image</span></div>
+        <div class="meta"><a href="#">Swasthya Phase II - Year 2</a></div>
+        <div class="meta">Seva Sansthan</div>
+        <div class="meta"><span class="badge badge-gray">Files</span></div>
+        <div class="meta">12 Jan 2026</div>
+        <div class="meta">3.1 MB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#dc2626"></span> FCRA_Certificate_2025.pdf</div>
+        <div class="meta"><span class="badge badge-blue">PDF</span></div>
+        <div class="meta"><a href="#">Saathi Foundation</a></div>
+        <div class="meta">Saathi Foundation</div>
+        <div class="meta"><span class="badge badge-green">Due Diligence</span></div>
+        <div class="meta">8 Jan 2026</div>
+        <div class="meta">145 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#dc2626"></span> 80G_Certificate_Renewed.pdf</div>
+        <div class="meta"><span class="badge badge-blue">PDF</span></div>
+        <div class="meta"><a href="#">Prayas Trust</a></div>
+        <div class="meta">Prayas Trust</div>
+        <div class="meta"><span class="badge badge-green">Documents</span></div>
+        <div class="meta">5 Jan 2026</div>
+        <div class="meta">89 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#d97706"></span> Budget_Utilisation_Q3_FY25.xlsx</div>
+        <div class="meta"><span class="badge badge-orange">Spreadsheet</span></div>
+        <div class="meta"><a href="#">Education First - Year 3</a></div>
+        <div class="meta">Vidya Foundation</div>
+        <div class="meta"><span class="badge badge-purple">Utilisation</span></div>
+        <div class="meta">2 Jan 2026</div>
+        <div class="meta">34 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#dc2626"></span> Disbursement_Memo_Dec2025.pdf</div>
+        <div class="meta"><span class="badge badge-blue">PDF</span></div>
+        <div class="meta"><a href="#">FR-00234</a></div>
+        <div class="meta">Seva Sansthan</div>
+        <div class="meta"><span class="badge badge-purple">Fund Request & Disbursement</span></div>
+        <div class="meta">28 Dec 2025</div>
+        <div class="meta">156 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#2563eb"></span> Board_Note_03-01-2026.docx</div>
+        <div class="meta"><span class="badge badge-blue">Document</span></div>
+        <div class="meta"><a href="#">P-987YGHY</a></div>
+        <div class="meta">Prayas Trust</div>
+        <div class="meta"><span class="badge badge-green">Details</span></div>
+        <div class="meta">3 Jan 2026</div>
+        <div class="meta">46 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#dc2626"></span> PAN_Card_Saathi.pdf</div>
+        <div class="meta"><span class="badge badge-blue">PDF</span></div>
+        <div class="meta"><a href="#">Saathi Foundation</a></div>
+        <div class="meta">Saathi Foundation</div>
+        <div class="meta"><span class="badge badge-green">Due Diligence</span></div>
+        <div class="meta">20 Dec 2025</div>
+        <div class="meta">67 KB</div>
+      </div>
+
+      <div class="list-row">
+        <div class="checkbox"></div>
+        <div class="filename file-icon"><span class="icon-dot" style="background:#059669"></span> Impact_Assessment_Report.jpg</div>
+        <div class="meta"><span class="badge badge-green">Image</span></div>
+        <div class="meta"><a href="#">Swasthya Phase II - Year 2</a></div>
+        <div class="meta">Seva Sansthan</div>
+        <div class="meta"><span class="badge badge-gray">Reporting</span></div>
+        <div class="meta">15 Dec 2025</div>
+        <div class="meta">1.8 MB</div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <span>Showing 1 - 10 of 312 documents</span>
+      <div class="pagination-btns">
+        <div class="pg">&laquo;</div>
+        <div class="pg active">1</div>
+        <div class="pg">2</div>
+        <div class="pg">3</div>
+        <div class="pg">...</div>
+        <div class="pg">32</div>
+        <div class="pg">&raquo;</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SCREEN 2: FORM VIEW -->
+<!-- ══════════════════════════════════════════ -->
+<div class="screen" id="screen-form">
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-section" style="padding-top:12px;">
+      <div class="sidebar-item" onclick="showScreen('list')" style="font-weight:600; color:#2b5ea7;">← Back to List</div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Navigation</div>
+      <div class="sidebar-item">⬆ Previous Document</div>
+      <div class="sidebar-item">⬇ Next Document</div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Source Breadcrumb</div>
+      <div style="padding: 4px 8px; font-size: 12px; color: #4a4a4a; line-height: 1.8;">
+        <a href="#" style="color:#2b5ea7; text-decoration:none;">Saathi Foundation</a><br/>
+        &nbsp;&nbsp;→ <a href="#" style="color:#2b5ea7; text-decoration:none;">relax program</a><br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;→ <a href="#" style="color:#2b5ea7; text-decoration:none;">Year 1 (Grant)</a><br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ Details tab<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <strong>This file</strong>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="page-header">
+      <div class="page-title">DOC-REG-00147</div>
+      <div class="page-actions">
+        <button class="btn" onclick="showScreen('list')">← Back to List</button>
+        <button class="btn btn-primary">↗ Go to Source Record</button>
+        <button class="btn">⬇ Download File</button>
+      </div>
+    </div>
+
+    <div class="form-container">
+
+      <!-- File Preview -->
+      <div class="file-preview-box">
+        <div class="file-icon-large">📄</div>
+        <div class="file-name">Grant_Agreement_Relax_Program.pdf</div>
+        <div class="file-meta">PDF &bull; 2.4 MB &bull; Uploaded 15 Jan 2026 by Project Manager (pm@yopmail.com)</div>
+      </div>
+
+      <!-- File Details Card -->
+      <div class="form-card">
+        <div class="form-card-header">📋 File Details</div>
+        <div class="form-card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>File Name</label>
+              <div class="value">Grant_Agreement_Relax_Program.pdf</div>
+            </div>
+            <div class="form-field">
+              <label>File Type</label>
+              <div class="value"><span class="badge badge-blue">PDF</span></div>
+            </div>
+            <div class="form-field">
+              <label>File Size</label>
+              <div class="value">2.4 MB</div>
+            </div>
+            <div class="form-field">
+              <label>Extension</label>
+              <div class="value">pdf</div>
+            </div>
+            <div class="form-field">
+              <label>Private</label>
+              <div class="value">Yes</div>
+            </div>
+            <div class="form-field">
+              <label>Upload Date</label>
+              <div class="value">15 January 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Source Card -->
+      <div class="form-card">
+        <div class="form-card-header">🔗 Source</div>
+        <div class="form-card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Source Module</label>
+              <div class="value"><a href="#">Grant</a></div>
+            </div>
+            <div class="form-field">
+              <label>Source Record</label>
+              <div class="value"><a href="#">relax program - Year 1</a></div>
+            </div>
+            <div class="form-field">
+              <label>Source Field / Tab</label>
+              <div class="value">grant_agreement_mou (Details tab)</div>
+            </div>
+            <div class="form-field">
+              <label>Category</label>
+              <div class="value"><span class="badge badge-green">Details</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Context Card -->
+      <div class="form-card">
+        <div class="form-card-header">🏢 Context</div>
+        <div class="form-card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Partner / NGO</label>
+              <div class="value"><a href="#">Saathi Foundation</a></div>
+            </div>
+            <div class="form-field">
+              <label>Project</label>
+              <div class="value"><a href="#">relax program</a></div>
+            </div>
+            <div class="form-field">
+              <label>Donor</label>
+              <div class="value"><a href="#">LIC HFL</a></div>
+            </div>
+            <div class="form-field">
+              <label>Programme</label>
+              <div class="value"><a href="#">Swasthya</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance Card -->
+      <div class="form-card">
+        <div class="form-card-header">🛡 Compliance</div>
+        <div class="form-card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Document Number</label>
+              <div class="value" style="color:#8d99a6;">N/A</div>
+            </div>
+            <div class="form-field">
+              <label>Compliance Status</label>
+              <div class="value"><span class="badge badge-gray">NA</span></div>
+            </div>
+            <div class="form-field">
+              <label>Issuance Date</label>
+              <div class="value" style="color:#8d99a6;">—</div>
+            </div>
+            <div class="form-field">
+              <label>Expiry Date</label>
+              <div class="value" style="color:#8d99a6;">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metadata Card -->
+      <div class="form-card">
+        <div class="form-card-header">📊 Metadata</div>
+        <div class="form-card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Uploaded By</label>
+              <div class="value">Project Manager (pm@yopmail.com)</div>
+            </div>
+            <div class="form-field">
+              <label>Frappe File ID</label>
+              <div class="value" style="font-family:monospace; font-size:12px; color:#6b7280;">3ae1b131d4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.sw-btn').forEach(b => {
+    b.classList.toggle('inactive', !b.textContent.toLowerCase().includes(name));
+  });
+  // Update breadcrumb
+  const bc = document.querySelector('.navbar-breadcrumb');
+  if (name === 'list') {
+    bc.innerHTML = 'Document Repository &rsaquo; <span>List</span>';
+  } else {
+    bc.innerHTML = 'Document Repository &rsaquo; <span>DOC-REG-00147</span>';
+  }
+}
+</script>
+
+</body>
+</html>

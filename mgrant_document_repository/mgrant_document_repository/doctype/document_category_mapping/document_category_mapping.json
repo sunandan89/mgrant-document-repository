@@ -1,0 +1,40 @@
+{
+  "actions": [],
+  "creation": "2026-04-15 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": ["info_html", "mappings"],
+  "fields": [
+    {
+      "fieldname": "info_html",
+      "fieldtype": "HTML",
+      "options": "<div class='alert alert-info'>Configure how document source fields map to user-facing categories.<br><br><b>Priority order:</b><br>1. Explicit mapping below (source_doctype + source_field → category_label)<br>2. Auto-derive from the Tab label the field sits under in the DocType<br>3. Fall back to source DocType name<br>4. Last resort: \"Other\"</div>"
+    },
+    {
+      "fieldname": "mappings",
+      "fieldtype": "Table",
+      "label": "Category Mappings",
+      "options": "Document Category Mapping Row",
+      "reqd": 0
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "issingle": 1,
+  "links": [],
+  "modified": "2026-04-15 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "mGrant - Document Repository",
+  "name": "Document Category Mapping",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}
