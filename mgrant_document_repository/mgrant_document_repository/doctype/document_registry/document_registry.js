@@ -41,8 +41,9 @@ frappe.ui.form.on("Document Registry", {
             });
         }
 
-        frm.add_custom_button(__("Back to List"), function () {
-            frappe.set_route("List", "Document Registry");
+        frm.add_custom_button(__("Back to Repository"), function () {
+            // Navigate to workspace CHB, not native list view
+            frappe.set_route("Workspaces", "Document Repository");
         });
     },
 });

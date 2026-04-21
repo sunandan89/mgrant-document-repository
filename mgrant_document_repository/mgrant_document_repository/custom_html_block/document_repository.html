@@ -1,16 +1,24 @@
 <div id="doc-repo-root">
+  <!-- Page Header -->
+  <div id="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Document Repository</h1>
+      <span class="page-subtitle">Central document index across all mGrant modules</span>
+    </div>
+  </div>
+
   <!-- Stats Bar -->
   <div id="stats-bar">
     <div class="stats-left">
       <span id="stat-count" class="stat-item">0 documents</span>
       <span class="stat-sep">|</span>
-      <span id="stat-size" class="stat-item">Total size: 0 B</span>
+      <span id="stat-size" class="stat-item">Total: 0 B</span>
       <span class="stat-sep">|</span>
       <span id="stat-last" class="stat-item">Last upload: —</span>
     </div>
     <div class="stats-right">
-      <input type="text" id="search-input" placeholder="Search files..." />
-      <button id="btn-export" class="btn-action" title="Export">Export</button>
+      <input type="text" id="search-input" placeholder="Search files, partners, records..." />
+      <button id="btn-export" class="btn-action" title="Export to Excel">Export</button>
     </div>
   </div>
 
@@ -56,6 +64,29 @@
           <div id="filetype-items"></div>
         </div>
       </div>
+
+      <!-- By Compliance Status -->
+      <div class="filter-group" data-group="compliance">
+        <div class="filter-group-header">BY COMPLIANCE</div>
+        <div class="filter-group-items">
+          <div class="filter-item active" data-value="">
+            <span class="filter-label">All Statuses</span>
+            <span class="filter-count" id="count-compliance-all"></span>
+          </div>
+          <div id="compliance-items"></div>
+        </div>
+      </div>
+
+      <!-- Date Range Filter -->
+      <div class="filter-group" data-group="daterange">
+        <div class="filter-group-header">UPLOAD DATE</div>
+        <div class="date-range-inputs">
+          <label class="date-label">From</label>
+          <input type="date" id="date-from" class="date-input" />
+          <label class="date-label">To</label>
+          <input type="date" id="date-to" class="date-input" />
+        </div>
+      </div>
     </div>
 
     <!-- Content Area -->
@@ -71,7 +102,7 @@
               <th class="col-partner" data-sort="partner_name">PARTNER</th>
               <th class="col-category" data-sort="source_category">CATEGORY</th>
               <th class="col-date" data-sort="upload_date">UPLOAD DATE</th>
-              <th class="col-size" data-sort="file_size">SIZE</th>
+              <th class="col-actions"></th>
             </tr>
           </thead>
           <tbody id="doc-tbody"></tbody>
