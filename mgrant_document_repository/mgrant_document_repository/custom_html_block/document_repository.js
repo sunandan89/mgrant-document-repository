@@ -565,10 +565,30 @@
                 ? '/app/' + doc.source_doctype.toLowerCase().replace(/ /g, '-') + '/' + encodeURIComponent(doc.source_name)
                 : '#';
 
+            // Build file preview tooltip for images and PDFs
+            var previewHtml = '';
+            var isImage = doc.file_type === 'Image' && doc.file_url;
+            var isPdf = doc.file_type === 'PDF' && doc.file_url;
+            if (isImage) {
+                previewHtml = '<div class="file-preview">'
+                    + '<img src="' + escapeHtml(doc.file_url) + '" alt="preview" />'
+                    + '<div class="file-preview-info">' + escapeHtml(doc.file_size_display || '') + '</div>'
+                    + '</div>';
+            } else if (isPdf) {
+                previewHtml = '<div class="file-preview">'
+                    + '<div style="display:flex;align-items:center;gap:8px;padding:12px;">'
+                    + '<span style="font-size:32px;">📄</span>'
+                    + '<div><div style="font-size:12px;font-weight:600;color:#1E40AF;">PDF Document</div>'
+                    + '<div style="font-size:11px;color:#6B7280;">' + escapeHtml(doc.file_size_display || '') + '</div></div>'
+                    + '</div></div>';
+            }
+            var cellClass = (isImage || isPdf) ? 'fname-cell file-preview-trigger' : 'fname-cell';
+
             html += '<tr data-name="' + escapeHtml(doc.name) + '" data-url="' + escapeHtml(doc.file_url || '') + '">'
-                + '<td class="col-fname"><div class="fname-cell">'
+                + '<td class="col-fname"><div class="' + cellClass + '">'
                 + '<div class="fname-icon ' + icon[1] + '">' + icon[0] + '</div>'
                 + '<span class="fname-text" title="' + escapeHtml(doc.file_name) + '">' + escapeHtml(doc.file_name) + '</span>'
+                + previewHtml
                 + '</div></td>'
                 + '<td class="col-type"><span class="badge ' + typeBadgeClass(doc.file_type) + '">' + escapeHtml(doc.file_type) + '</span></td>'
                 + '<td class="col-source"><a class="source-link" href="' + sourceRoute + '">' + escapeHtml(doc.source_record_title || doc.source_name || '') + '</a></td>'
@@ -808,6 +828,41 @@
             }
         });
     });
+
+    // ── Upload button ──
+    var uploadBtn = _el('btn-upload');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function() {
+            // Show Frappe dialog to pick a source module and record for uploading
+            var TRACKED_DTS = ['Project', 'Grant', 'NGO', 'Proposal', 'Fund Request',
+                'Vendor', 'NGO Due Diligence', 'Quarterly Utilisation Report',
+                'Fund Disbursement', 'Bank Details Update Request', 'RFP'];
+            var d = new frappe.ui.Dialog({
+                title: 'Upload Document',
+                fields: [
+                    {
+                        fieldname: 'info_html', fieldtype: 'HTML',
+                        options: '<p style="color:#6B7280;font-size:13px;margin-bottom:8px;">Select the source record where you want to upload a document. You will be taken to that record\'s form to attach the file.</p>'
+                    },
+                    {
+                        fieldname: 'source_doctype', fieldtype: 'Select', label: 'Module',
+                        options: TRACKED_DTS.join('\n'), reqd: 1
+                    },
+                    {
+                        fieldname: 'source_name', fieldtype: 'Dynamic Link', label: 'Record',
+                        options: 'source_doctype', reqd: 1
+                    }
+                ],
+                primary_action_label: 'Go to Record',
+                primary_action: function(values) {
+                    d.hide();
+                    var slug = values.source_doctype.toLowerCase().replace(/ /g, '-');
+                    frappe.set_route('Form', values.source_doctype, values.source_name);
+                }
+            });
+            d.show();
+        });
+    }
 
     // ── Keyboard navigation ──
     root_element.addEventListener('keydown', function(e) {
