@@ -1,248 +1,411 @@
+/**
+ * Document Registry — Form Read-View Overlay
+ *
+ * Uses the Form Read-View Overlay pattern from mgrant-frappe-patterns
+ * to render a clean presentation-mode detail page for Document Registry records.
+ * Edit button restores the standard Frappe form. Back button returns to repository.
+ */
+
+
+// ═══════════════════════════════════════════════════════════════════
+// CORE: Form Read-View Overlay (inlined from mgrant-frappe-patterns)
+// ═══════════════════════════════════════════════════════════════════
+
+function getTabWrapper(frm, tabFieldname) {
+  if (frm.layout && frm.layout.tabs) {
+    for (var i = 0; i < frm.layout.tabs.length; i++) {
+      var tab = frm.layout.tabs[i];
+      if (tab.df && tab.df.fieldname === tabFieldname) {
+        if (tab.wrapper && tab.wrapper.length) return tab.wrapper;
+        return null;
+      }
+    }
+  }
+  if (frm.fields_dict && frm.fields_dict[tabFieldname]) {
+    var field = frm.fields_dict[tabFieldname];
+    if (field.$wrapper && field.$wrapper.length) return field.$wrapper;
+  }
+  return null;
+}
+
+function buildReadViewOverlay(frm, options) {
+  var tabFieldname = options.tabFieldname;
+  var overlayClass = options.overlayClass || 'rv-overlay';
+
+  var $tab = getTabWrapper(frm, tabFieldname);
+  if (!$tab) return false;
+
+  $tab.find('.' + overlayClass).remove();
+
+  var editColor = options.editColor || '#B45309';
+  var toolbar = '<div class="rv-overlay-toolbar">' +
+    '<button class="btn btn-sm rv-overlay-btn-edit" style="' +
+      'background:' + editColor + ' !important;color:white !important;' +
+      'border:none !important;padding:7px 18px !important;border-radius:6px !important;' +
+      'font-size:13px !important;font-weight:600 !important;cursor:pointer !important;">' +
+      (options.editLabel || 'Edit') +
+    '</button>';
+
+  if (options.backUrl) {
+    toolbar += '<button class="btn btn-sm rv-overlay-btn-back" style="' +
+      'background:#F3F4F6 !important;color:#374151 !important;' +
+      'border:1px solid #E5E7EB !important;padding:7px 16px !important;' +
+      'border-radius:6px !important;font-size:13px !important;font-weight:500 !important;' +
+      'cursor:pointer !important;">' +
+      (options.backLabel || 'Back') +
+    '</button>';
+  }
+  toolbar += '</div>';
+
+  var css = options.renderCSS ? '<style>' + options.renderCSS() + '</style>' : '';
+  var content = options.renderContent(frm);
+
+  var html = '<div class="' + overlayClass + '">' +
+    css +
+    '<style>' +
+    '.rv-overlay-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding:0 4px; }' +
+    '</style>' +
+    toolbar +
+    content +
+    '</div>';
+
+  $tab.children().hide();
+  $tab.prepend(html);
+
+  $tab.find('.rv-overlay-btn-edit').on('click', function() {
+    $tab.find('.' + overlayClass).remove();
+    $tab.children().show();
+    if (options.onEdit) options.onEdit(frm);
+  });
+
+  if (options.backUrl) {
+    $tab.find('.rv-overlay-btn-back').on('click', function() {
+      window.location.href = options.backUrl;
+    });
+  }
+
+  return true;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// DOCUMENT REGISTRY: Read-View Content
+// ═══════════════════════════════════════════════════════════════════
+
+function esc(val) {
+  if (!val && val !== 0) return "";
+  return $("<span>").text(val).html();
+}
+
+function fileIcon(fileType) {
+  var icons = {
+    PDF: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13l-2 4h4l-2 4"/></svg>',
+    Document: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+    Spreadsheet: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>',
+    Image: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    Video: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DB2777" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+    Presentation: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20v14H2z"/><path d="M8 21l4-4 4 4"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+    Other: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+  };
+  return icons[fileType] || icons.Other;
+}
+
+function fileIconBg(fileType) {
+  var map = {
+    PDF: '#FEF2F2', Document: '#EFF6FF', Spreadsheet: '#ECFDF5',
+    Image: '#F5F3FF', Video: '#FDF2F8', Presentation: '#ECFEFF', Other: '#F3F4F6'
+  };
+  return map[fileType] || '#F3F4F6';
+}
+
+function chipHtml(label, bgColor, textColor) {
+  if (!label) return '';
+  return '<span style="display:inline-block;background:' + bgColor +
+    ';color:' + textColor + ';padding:3px 10px;border-radius:20px;' +
+    'font-size:11.5px;font-weight:600;letter-spacing:0.2px;white-space:nowrap;">' +
+    esc(label) + '</span>';
+}
+
+function complianceChip(status) {
+  if (!status || status === 'NA') return chipHtml('N/A', '#F3F4F6', '#6B7280');
+  var map = {
+    Active: ['#DCFCE7', '#15803D'],
+    Expired: ['#FEE2E2', '#991B1B'],
+    Pending: ['#FEF3C7', '#92400E'],
+    Rejected: ['#FEE2E2', '#991B1B']
+  };
+  var c = map[status] || ['#F3F4F6', '#6B7280'];
+  return chipHtml(status, c[0], c[1]);
+}
+
+function fileTypeChip(fileType) {
+  var map = {
+    PDF: ['#FEF2F2', '#DC2626'], Document: ['#EFF6FF', '#2563EB'],
+    Spreadsheet: ['#ECFDF5', '#059669'], Image: ['#F5F3FF', '#7C3AED'],
+    Video: ['#FDF2F8', '#DB2777'], Presentation: ['#ECFEFF', '#0891B2'],
+    Other: ['#F3F4F6', '#6B7280']
+  };
+  var c = map[fileType] || map.Other;
+  return chipHtml(fileType, c[0], c[1]);
+}
+
+function linkHtml(doctype, name, display) {
+  if (!name) return '<span style="color:#9CA3AF;">—</span>';
+  var slug = doctype.toLowerCase().replace(/ /g, "-");
+  return '<a href="/app/' + slug + '/' + encodeURIComponent(name) +
+    '" style="color:#2563EB;text-decoration:none;font-weight:500;font-size:13.5px;">' +
+    esc(display || name) + '</a>';
+}
+
+function detailRow(label, valueHtml) {
+  var v = valueHtml || '<span style="color:#D1D5DB;">—</span>';
+  return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid #F3F4F6;">' +
+    '<span style="font-size:12.5px;color:#6B7280;font-weight:500;min-width:140px;">' + esc(label) + '</span>' +
+    '<span style="font-size:13.5px;color:#111827;text-align:right;flex:1;">' + v + '</span>' +
+    '</div>';
+}
+
+function sectionCard(title, contentHtml, opts) {
+  opts = opts || {};
+  var icon = opts.icon || '';
+  var headerBorder = opts.noBorder ? '' : 'border-bottom:1px solid #F3F4F6;';
+  return '<div class="dr-section-card" style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:16px;overflow:hidden;">' +
+    '<div style="padding:14px 20px;' + headerBorder + 'display:flex;align-items:center;gap:8px;">' +
+    (icon ? '<span style="display:flex;align-items:center;">' + icon + '</span>' : '') +
+    '<span style="font-size:13.5px;font-weight:600;color:#374151;">' + esc(title) + '</span>' +
+    '</div>' +
+    '<div style="padding:4px 20px 12px 20px;">' + contentHtml + '</div>' +
+    '</div>';
+}
+
+
+function renderDocRegistryContent(frm) {
+  var doc = frm.doc;
+  var html = '<div style="max-width:860px;margin:0 auto;padding:0 4px;">';
+
+  // ── Hero: File Identity Banner ──
+  var isImage = doc.file_type === 'Image';
+  var previewBg = fileIconBg(doc.file_type);
+
+  html += '<div style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;margin-bottom:20px;">';
+
+  // Image preview or icon
+  if (isImage && doc.file_url) {
+    html += '<div style="background:#FAFAFA;text-align:center;padding:24px;border-bottom:1px solid #F3F4F6;">' +
+      '<img src="' + esc(doc.file_url) + '" style="max-width:100%;max-height:320px;border-radius:8px;object-fit:contain;" />' +
+      '</div>';
+  } else {
+    html += '<div style="text-align:center;padding:32px 24px 20px 24px;background:' + previewBg + ';">' +
+      '<div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.08);">' +
+      fileIcon(doc.file_type || 'Other') +
+      '</div>' +
+      '</div>';
+  }
+
+  // File name + meta line
+  html += '<div style="padding:20px 24px;">';
+  html += '<div style="font-size:18px;font-weight:700;color:#111827;margin-bottom:8px;line-height:1.35;word-break:break-word;">' +
+    esc(doc.file_name || '—') + '</div>';
+
+  // Chips row: file type + category + compliance
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;">';
+  html += fileTypeChip(doc.file_type);
+  if (doc.source_category) {
+    html += chipHtml(doc.source_category, '#EDE9FE', '#6D28D9');
+  }
+  if (doc.compliance_status && doc.compliance_status !== 'NA') {
+    html += complianceChip(doc.compliance_status);
+  }
+  if (doc.is_private) {
+    html += chipHtml('Private', '#FEF3C7', '#92400E');
+  }
+  html += '</div>';
+
+  // Meta line: extension, size, date, uploader
+  var metaParts = [];
+  if (doc.file_extension) metaParts.push(esc(doc.file_extension.toUpperCase()));
+  if (doc.file_size_display) metaParts.push(esc(doc.file_size_display));
+  if (doc.upload_date) metaParts.push('Uploaded ' + esc(doc.upload_date));
+  if (doc.uploaded_by_name) metaParts.push('by ' + esc(doc.uploaded_by_name));
+  if (metaParts.length) {
+    html += '<div style="font-size:12.5px;color:#9CA3AF;line-height:1.5;">' + metaParts.join(' &middot; ') + '</div>';
+  }
+
+  // Download button
+  if (doc.file_url) {
+    html += '<div style="margin-top:16px;">' +
+      '<a href="' + esc(doc.file_url) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;' +
+      'background:#EFF6FF;color:#2563EB;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;' +
+      'border:1px solid #BFDBFE;transition:background 0.15s;">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+      'Download File</a></div>';
+  }
+
+  html += '</div></div>';  // close file identity banner
+
+
+  // ── Source & Origin ──
+  var sourceRows = '';
+  sourceRows += detailRow('Source Module', '<span style="font-weight:600;">' + esc(doc.source_doctype) + '</span>');
+  if (doc.source_name) {
+    sourceRows += detailRow('Source Record', linkHtml(doc.source_doctype, doc.source_name, doc.source_record_title || doc.source_name));
+  }
+  if (doc.source_field) {
+    sourceRows += detailRow('Source Field / Tab', esc(doc.source_field));
+  }
+  sourceRows += detailRow('Category', doc.source_category ? chipHtml(doc.source_category, '#EDE9FE', '#6D28D9') : null);
+
+  var sourceIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+  html += sectionCard('Source', sourceRows, { icon: sourceIcon });
+
+
+  // ── Context ──
+  var hasContext = doc.partner || doc.project || doc.donor || doc.programme;
+  if (hasContext) {
+    var ctxRows = '';
+    if (doc.partner) {
+      ctxRows += detailRow('Partner / NGO', linkHtml('NGO', doc.partner, doc.partner_name || doc.partner));
+    }
+    if (doc.project) {
+      ctxRows += detailRow('Project', linkHtml('Project', doc.project, doc.project_title || doc.project));
+    }
+    if (doc.donor) {
+      ctxRows += detailRow('Donor', linkHtml('Donor', doc.donor, doc.donor));
+    }
+    if (doc.programme) {
+      ctxRows += detailRow('Programme', linkHtml('Programme', doc.programme, doc.programme));
+    }
+
+    var ctxIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+    html += sectionCard('Context', ctxRows, { icon: ctxIcon });
+  }
+
+
+  // ── Compliance (only if there's meaningful compliance data) ──
+  var hasCompliance = doc.compliance_status && doc.compliance_status !== 'NA';
+  var hasComplianceDetails = doc.document_number || doc.issuance_date || doc.expiry_date || hasCompliance;
+  if (hasComplianceDetails) {
+    var compRows = '';
+    compRows += detailRow('Status', complianceChip(doc.compliance_status));
+    if (doc.document_number) {
+      compRows += detailRow('Document Number', '<span style="font-family:\'SF Mono\',SFMono-Regular,Menlo,monospace;font-size:12.5px;">' + esc(doc.document_number) + '</span>');
+    }
+    if (doc.issuance_date) {
+      compRows += detailRow('Issued', esc(doc.issuance_date));
+    }
+    if (doc.expiry_date) {
+      compRows += detailRow('Expires', esc(doc.expiry_date));
+    }
+
+    var compIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+    html += sectionCard('Compliance', compRows, { icon: compIcon });
+  }
+
+
+  // ── Metadata (collapsed by default — always show, lighter treatment) ──
+  var metaRows = '';
+  metaRows += detailRow('Uploaded By', esc(doc.uploaded_by_name || doc.uploaded_by));
+  metaRows += detailRow('Upload Date', esc(doc.upload_date));
+  metaRows += detailRow('Private', doc.is_private ? 'Yes' : 'No');
+  metaRows += detailRow('Frappe File ID', doc.frappe_file
+    ? '<span style="font-family:\'SF Mono\',SFMono-Regular,Menlo,monospace;font-size:12px;color:#6B7280;">' + esc(doc.frappe_file) + '</span>'
+    : null);
+  metaRows += detailRow('Registry ID', '<span style="font-family:\'SF Mono\',SFMono-Regular,Menlo,monospace;font-size:12px;color:#6B7280;">' + esc(doc.name) + '</span>');
+
+  var metaIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  html += sectionCard('Metadata', metaRows, { icon: metaIcon });
+
+
+  html += '</div>';  // close max-width wrapper
+  return html;
+}
+
+function renderDocRegistryCSS() {
+  return '' +
+    '.dr-section-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }' +
+    '.dr-section-card { transition: box-shadow 0.15s ease; }' +
+    '.rv-overlay { background: #F9FAFB; padding: 20px 0; min-height: 400px; }' +
+    '.rv-overlay a:hover { text-decoration: underline !important; }';
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// FORM EVENT: Wire it all up
+// ═══════════════════════════════════════════════════════════════════
+
 frappe.ui.form.on("Document Registry", {
-    refresh: function (frm) {
-        // Disable save — this is a read-only index, not the source of truth
-        frm.disable_save();
+  refresh: function (frm) {
+    if (frm.is_new()) return;
 
-        // Hide all standard Frappe form fields (NOT the tab itself)
-        var fields_to_hide = [
-            "file_name", "file_url", "column_break_file",
-            "file_type", "file_extension", "file_size", "file_size_display",
-            "source_section", "source_doctype", "source_name",
-            "source_record_title", "column_break_source",
-            "source_field", "source_category",
-            "context_section", "partner", "partner_name",
-            "project", "project_title", "column_break_context",
-            "donor", "programme",
-            "compliance_section", "document_number", "issuance_date",
-            "column_break_compliance", "expiry_date", "compliance_status",
-            "metadata_section", "uploaded_by", "uploaded_by_name",
-            "column_break_metadata", "upload_date", "frappe_file", "is_private"
-        ];
-        frm.toggle_display(fields_to_hide, false);
+    // Disable save — read-only index
+    frm.disable_save();
 
-        // Inject the custom card-based layout
-        render_custom_form_layout(frm);
+    // Apply overlay after a short delay to ensure tabs are rendered
+    setTimeout(function () {
+      buildReadViewOverlay(frm, {
+        tabFieldname: 'details_tab',
+        editLabel: 'Edit Fields',
+        backLabel: 'Back to Repository',
+        backUrl: '/app/document-repository',
+        editColor: '#2563EB',
 
-        // Custom action buttons
-        if (frm.doc.source_doctype && frm.doc.source_name) {
-            frm.add_custom_button(
-                __("Go to Source Record"),
-                function () {
-                    frappe.set_route("Form", frm.doc.source_doctype, frm.doc.source_name);
-                },
-                null,
-                "primary"
-            );
+        renderContent: renderDocRegistryContent,
+        renderCSS: renderDocRegistryCSS,
+
+        onEdit: function (frm) {
+          // When switching to edit mode, add a helper button to go back to read view
+          frm.add_custom_button(__("Read View"), function () {
+            frm.refresh();
+          });
         }
+      });
+    }, 100);
 
-        if (frm.doc.file_url) {
-            frm.add_custom_button(__("Download File"), function () {
-                window.open(frm.doc.file_url, "_blank");
-            });
-        }
-
-        frm.add_custom_button(__("Back to Repository"), function () {
-            // Navigate to workspace CHB, not native list view
-            frappe.set_route("Workspaces", "Document Repository");
-        });
-    },
+    // Custom action buttons on the form header
+    if (frm.doc.source_doctype && frm.doc.source_name) {
+      frm.add_custom_button(
+        __("Go to Source"),
+        function () {
+          frappe.set_route("Form", frm.doc.source_doctype, frm.doc.source_name);
+        },
+        null,
+        "primary"
+      );
+    }
+  },
 });
 
 
-// ── Helper functions ──
-
-function esc(val) {
-    if (!val) return "";
-    return $("<span>").text(val).html();
-}
-
-function get_file_icon(file_type) {
-    var map = {
-        PDF: "📄", Document: "📝", Spreadsheet: "📊",
-        Image: "🖼️", Video: "🎬", Presentation: "📽️", Other: "📎"
-    };
-    return map[file_type] || "📎";
-}
-
-function badge_html(label, type) {
-    if (!label) return '<span style="color:#999;">—</span>';
-    var palettes = {
-        file_type: {
-            PDF: "#e8f0fe|#1a56db", Document: "#e8f0fe|#1a56db",
-            Spreadsheet: "#fef3e2|#b45309", Image: "#e6f4ea|#137333",
-            Video: "#f3e8ff|#7c3aed", Presentation: "#e6f4ea|#137333"
-        },
-        source_category: {
-            Details: "#e6f4ea|#137333", Documents: "#e6f4ea|#137333",
-            "Due Diligence": "#fef3e2|#b45309",
-            "Fund Request & Disbursement": "#f3e8ff|#7c3aed",
-            "Budget Report": "#e8f0fe|#1a56db",
-            Utilisation: "#f3e8ff|#7c3aed", Reporting: "#fef3e2|#b45309",
-            Files: "#f3f3f3|#666", "Bank Details": "#f3f3f3|#666"
-        },
-        compliance_status: {
-            Active: "#e6f4ea|#137333", Expired: "#fee2e2|#991b1b",
-            Pending: "#fef3e2|#b45309", Rejected: "#fee2e2|#991b1b",
-            NA: "#f3f3f3|#666"
-        }
-    };
-    var pair = ((palettes[type] || {})[label]) || "#f3f3f3|#666";
-    var p = pair.split("|");
-    return '<span style="display:inline-block;background:' + p[0] +
-        ';color:' + p[1] +
-        ';padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.3px;">' +
-        esc(label) + '</span>';
-}
-
-function field_row(label, value) {
-    var v = value || '<span style="color:#aaa;">—</span>';
-    return '<div style="margin-bottom:14px;">' +
-        '<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#8d99a6;margin-bottom:4px;">' + esc(label) + '</div>' +
-        '<div style="font-size:13px;color:#1f2937;">' + v + '</div>' +
-        '</div>';
-}
-
-function link_html(doctype, name, display) {
-    if (!name) return '<span style="color:#aaa;">—</span>';
-    var slug = doctype.toLowerCase().replace(/ /g, "-");
-    var text = display || name;
-    return '<a href="/app/' + slug + '/' + encodeURIComponent(name) +
-        '" style="color:#2b5ea7;text-decoration:none;font-weight:500;">' + esc(text) + '</a>';
-}
-
-function card_html(icon, title, body_html) {
-    return '<div style="background:#fff;border:1px solid #e4e4e4;border-radius:8px;margin-bottom:16px;overflow:hidden;">' +
-        '<div class="dr-card-hdr" style="background:#fafbfc;padding:12px 16px;border-bottom:1px solid #e4e4e4;display:flex;align-items:center;font-weight:600;color:#374151;font-size:13px;cursor:pointer;">' +
-        '<span style="margin-right:8px;">' + icon + '</span>' +
-        '<span>' + title + '</span>' +
-        '<span class="dr-card-arrow" style="margin-left:auto;transition:transform 0.2s;">▾</span>' +
-        '</div>' +
-        '<div class="dr-card-body" style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;">' +
-        body_html +
-        '</div></div>';
-}
-
-
-function render_custom_form_layout(frm) {
-    var doc = frm.doc;
-
-    // Remove any previously injected layout (avoid duplicates on re-render)
-    $(frm.page.main).find(".dr-custom-layout").remove();
-
-    // ── File Preview Box ──
-    var preview = '<div style="background:#f8fafb;border:2px dashed #d8dee4;border-radius:8px;padding:36px;text-align:center;margin-bottom:20px;">' +
-        '<div style="font-size:48px;margin-bottom:10px;">' + get_file_icon(doc.file_type || "Other") + '</div>' +
-        '<div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:6px;">' + esc(doc.file_name || "—") + '</div>' +
-        '<div style="font-size:12.5px;color:#8d99a6;">' +
-            (doc.file_extension ? esc(doc.file_extension.toUpperCase()) : "") +
-            (doc.file_size_display ? " &bull; " + esc(doc.file_size_display) : "") +
-            (doc.upload_date ? " &bull; Uploaded " + esc(doc.upload_date) : "") +
-            (doc.uploaded_by_name ? " by " + esc(doc.uploaded_by_name) : "") +
-        '</div></div>';
-
-    // ── File Details Card ──
-    var details_body =
-        field_row("File Name", esc(doc.file_name)) +
-        field_row("File Type", badge_html(doc.file_type, "file_type")) +
-        field_row("Extension", esc(doc.file_extension)) +
-        field_row("File Size", esc(doc.file_size_display)) +
-        field_row("Private", doc.is_private ? "Yes" : "No") +
-        field_row("Upload Date", esc(doc.upload_date));
-
-    // ── Source Card ──
-    var source_body =
-        field_row("Source Module", link_html("DocType", doc.source_doctype, doc.source_doctype)) +
-        field_row("Source Record", doc.source_doctype && doc.source_name
-            ? link_html(doc.source_doctype, doc.source_name, doc.source_record_title || doc.source_name)
-            : null) +
-        field_row("Source Field / Tab", esc(doc.source_field)) +
-        field_row("Category", badge_html(doc.source_category, "source_category"));
-
-    // ── Context Card ──
-    var context_body =
-        field_row("Partner / NGO", link_html("NGO", doc.partner, doc.partner_name || doc.partner)) +
-        field_row("Project", link_html("Project", doc.project, doc.project_title || doc.project)) +
-        field_row("Donor", link_html("Donor", doc.donor, doc.donor)) +
-        field_row("Programme", link_html("Programme", doc.programme, doc.programme));
-
-    // ── Compliance Card ──
-    var compliance_body =
-        field_row("Document Number", esc(doc.document_number)) +
-        field_row("Compliance Status", badge_html(doc.compliance_status, "compliance_status")) +
-        field_row("Issuance Date", esc(doc.issuance_date)) +
-        field_row("Expiry Date", esc(doc.expiry_date));
-
-    // ── Metadata Card ──
-    var metadata_body =
-        field_row("Uploaded By", esc(doc.uploaded_by_name || doc.uploaded_by)) +
-        field_row("Upload Date", esc(doc.upload_date)) +
-        field_row("Private", doc.is_private ? "Yes" : "No") +
-        field_row("Frappe File ID", doc.frappe_file
-            ? '<span style="font-family:monospace;font-size:12px;color:#6b7280;">' + esc(doc.frappe_file) + '</span>'
-            : null);
-
-    // ── Assemble full layout ──
-    var full_html = '<div class="dr-custom-layout" style="padding:20px 0;">' +
-        preview +
-        card_html("📋", "File Details", details_body) +
-        card_html("🔗", "Source", source_body) +
-        card_html("🏢", "Context", context_body) +
-        card_html("🛡", "Compliance", compliance_body) +
-        card_html("📊", "Metadata", metadata_body) +
-        '</div>';
-
-    // Inject into the form — try multiple selectors for Frappe v15/v16 compatibility
-    var $target = $(frm.page.main).find(".form-layout");
-    if (!$target.length) {
-        $target = $(frm.layout.wrapper);
-    }
-    if (!$target.length) {
-        $target = $(frm.page.main);
-    }
-    $target.prepend(full_html);
-
-    // Bind card collapse/expand
-    $(frm.page.main).find(".dr-card-hdr").on("click", function () {
-        var $body = $(this).next(".dr-card-body");
-        var $arrow = $(this).find(".dr-card-arrow");
-        if ($body.is(":visible")) {
-            $body.slideUp(200);
-            $arrow.css("transform", "rotate(-90deg)");
-        } else {
-            $body.slideDown(200);
-            $arrow.css("transform", "rotate(0deg)");
-        }
-    });
-}
-
-
-// ── List View Settings ──
+// ═══════════════════════════════════════════════════════════════════
+// LIST VIEW SETTINGS
+// ═══════════════════════════════════════════════════════════════════
 
 frappe.listview_settings["Document Registry"] = {
-    add_fields: ["file_type", "compliance_status", "source_category"],
+  add_fields: ["file_type", "compliance_status", "source_category"],
 
-    get_indicator: function (doc) {
-        if (doc.compliance_status === "Expired") {
-            return [__("Expired"), "red", "compliance_status,=,Expired"];
-        }
-        var type_map = {
-            PDF: ["PDF", "blue"], Document: ["Document", "blue"],
-            Spreadsheet: ["Spreadsheet", "orange"], Image: ["Image", "green"],
-            Video: ["Video", "purple"], Presentation: ["Presentation", "cyan"]
-        };
-        if (type_map[doc.file_type]) {
-            return [__(type_map[doc.file_type][0]), type_map[doc.file_type][1],
-                "file_type,=," + doc.file_type];
-        }
-        return [__("Other"), "grey", "file_type,=,Other"];
-    },
-
-    formatters: {
-        file_name: function (value, field, doc) {
-            if (value && doc.file_url) {
-                return '<a href="' + doc.file_url + '" target="_blank" title="Click to download">' + value + '</a>';
-            }
-            return value;
-        }
+  get_indicator: function (doc) {
+    if (doc.compliance_status === "Expired") {
+      return [__("Expired"), "red", "compliance_status,=,Expired"];
     }
+    var type_map = {
+      PDF: ["PDF", "blue"], Document: ["Document", "blue"],
+      Spreadsheet: ["Spreadsheet", "orange"], Image: ["Image", "green"],
+      Video: ["Video", "purple"], Presentation: ["Presentation", "cyan"]
+    };
+    if (type_map[doc.file_type]) {
+      return [__(type_map[doc.file_type][0]), type_map[doc.file_type][1],
+        "file_type,=," + doc.file_type];
+    }
+    return [__("Other"), "grey", "file_type,=,Other"];
+  },
+
+  formatters: {
+    file_name: function (value, field, doc) {
+      if (value && doc.file_url) {
+        return '<a href="' + doc.file_url + '" target="_blank" title="Click to download">' + value + '</a>';
+      }
+      return value;
+    }
+  }
 };
