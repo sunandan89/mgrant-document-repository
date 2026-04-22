@@ -893,12 +893,26 @@
     }
 
     function fetchAuditLog(append) {
-        // Fetch both: Document Registry creation events + Version change events
-        // We merge them into a single timeline sorted by date
+        // Fetch three things in parallel:
+        //   1. Document Registry records (upload events)
+        //   2. Version records (field change events)
+        //   3. User list (email → full_name lookup for consistent name display)
 
         var done = 0;
         var creations = [];
         var versions = [];
+        var userMap = {};  // email → full_name
+
+        function checkDone() {
+            done++;
+            if (done === 3) {
+                // Resolve email → full name for Version events
+                versions.forEach(function(v) {
+                    if (userMap[v.user]) v.user = userMap[v.user];
+                });
+                mergeAndRender(creations, versions, append);
+            }
+        }
 
         // 1. Get Document Registry records (each = an upload event)
         frappe.call({
@@ -926,8 +940,7 @@
                         partner_name: rec.partner_name
                     };
                 });
-                done++;
-                if (done === 2) mergeAndRender(creations, versions, append);
+                checkDone();
             }
         });
 
@@ -962,8 +975,27 @@
                         removed: parsed.removed || []
                     });
                 });
-                done++;
-                if (done === 2) mergeAndRender(creations, versions, append);
+                checkDone();
+            }
+        });
+
+        // 3. Get User list (email → full_name) for resolving Version.owner
+        frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'User',
+                fields: ['name', 'full_name'],
+                filters: [['enabled', '=', 1]],
+                limit_page_length: 0
+            },
+            async: true,
+            callback: function(r) {
+                (r.message || []).forEach(function(u) {
+                    if (u.full_name && u.full_name.trim()) {
+                        userMap[u.name] = u.full_name;
+                    }
+                });
+                checkDone();
             }
         });
     }
