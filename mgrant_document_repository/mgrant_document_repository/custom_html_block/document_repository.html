@@ -6,6 +6,7 @@
       <span class="page-subtitle">Central document index across all mGrant modules</span>
     </div>
     <div class="header-right">
+      <button id="btn-audit-log" class="btn-action" title="View activity log">Activity Log</button>
       <button id="btn-upload" class="btn-upload" title="Upload a file to a source record">+ Upload</button>
     </div>
   </div>
@@ -23,6 +24,13 @@
       <input type="text" id="search-input" placeholder="Search files, partners, records..." />
       <button id="btn-export" class="btn-action" title="Export to Excel">Export</button>
     </div>
+  </div>
+
+  <!-- Selection Bar (hidden until items selected) -->
+  <div id="selection-bar" style="display:none;">
+    <span id="selection-count">0 selected</span>
+    <button id="btn-download-zip" class="btn-action btn-zip" title="Download selected files as ZIP">Download ZIP</button>
+    <button id="btn-clear-selection" class="btn-action" title="Clear selection">Clear</button>
   </div>
 
   <!-- Active Filters -->
@@ -99,6 +107,7 @@
         <table id="doc-table">
           <thead>
             <tr>
+              <th class="col-check"><input type="checkbox" id="select-all" title="Select all" /></th>
               <th class="col-fname" data-sort="file_name">FILE NAME</th>
               <th class="col-type" data-sort="file_type">TYPE</th>
               <th class="col-source" data-sort="source_name">SOURCE RECORD</th>
@@ -117,6 +126,24 @@
         <div id="page-info">Showing 0 - 0 of 0</div>
         <div id="page-controls"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Audit Log Panel (hidden by default) -->
+  <div id="audit-log-panel" style="display:none;">
+    <div class="audit-panel-header">
+      <div class="audit-panel-title">
+        <h2>Activity Log</h2>
+        <span id="audit-count" class="audit-subtitle">Loading...</span>
+      </div>
+      <div class="audit-panel-actions">
+        <button id="btn-audit-export" class="btn-action" title="Export audit log">Export</button>
+        <button id="btn-audit-close" class="btn-action" title="Close">Close</button>
+      </div>
+    </div>
+    <div id="audit-log-list" class="audit-log-list"></div>
+    <div id="audit-pagination" class="audit-pagination">
+      <button id="btn-audit-more" class="btn-action">Load more</button>
     </div>
   </div>
 </div>
