@@ -154,5 +154,4 @@ else:
         "is_private": doc.is_private,
         "compliance_status": "NA",
     })
-    registry.flags.ignore_permissions = True
-    registry.insert()
+    registry.insert(ignore_permissions=True)
