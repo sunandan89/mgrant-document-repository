@@ -128,30 +128,30 @@ else:
 
     uploaded_by_name = frappe.db.get_value("User", doc.owner, "full_name") or doc.owner
 
-    registry = frappe.get_doc({
-        "doctype": "Document Registry",
-        "file_name": doc.file_name,
-        "file_url": doc.file_url,
-        "file_type": file_type,
-        "file_extension": ext,
-        "file_size": doc.file_size or 0,
-        "file_size_display": size_display,
-        "source_doctype": source_doctype,
-        "source_name": source_name,
-        "source_record_title": record_title or source_name,
-        "source_field": source_field,
-        "source_category": category,
-        "partner": partner,
-        "partner_name": partner_name,
-        "project": project,
-        "project_title": project_title,
-        "donor": donor,
-        "programme": programme,
-        "uploaded_by": doc.owner,
-        "uploaded_by_name": uploaded_by_name,
-        "upload_date": doc.creation.date() if doc.creation else None,
-        "frappe_file": doc.name,
-        "is_private": doc.is_private,
-        "compliance_status": "NA",
-    })
+    upload_date = str(doc.creation)[:10] if doc.creation else None
+
+    registry = frappe.new_doc("Document Registry")
+    registry.file_name = doc.file_name
+    registry.file_url = doc.file_url
+    registry.file_type = file_type
+    registry.file_extension = ext
+    registry.file_size = doc.file_size or 0
+    registry.file_size_display = size_display
+    registry.source_doctype = source_doctype
+    registry.source_name = source_name
+    registry.source_record_title = record_title or source_name
+    registry.source_field = source_field
+    registry.source_category = category
+    registry.partner = partner
+    registry.partner_name = partner_name
+    registry.project = project
+    registry.project_title = project_title
+    registry.donor = donor
+    registry.programme = programme
+    registry.uploaded_by = doc.owner
+    registry.uploaded_by_name = uploaded_by_name
+    registry.upload_date = upload_date
+    registry.frappe_file = doc.name
+    registry.is_private = doc.is_private
+    registry.compliance_status = "NA"
     registry.insert(ignore_permissions=True)
