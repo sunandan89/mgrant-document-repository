@@ -233,9 +233,9 @@
       // 3. All Document Registry records (for grant-wise docs in expand)
       apiCall('frappe.client.get_list', {
         doctype: 'Document Registry',
-        fields: ['name', 'document_name', 'attached_to_doctype', 'attached_to_name',
-                 'file_name', 'file_url', 'category', 'sub_category',
-                 'attached_to_owner', 'creation'],
+        fields: ['name', 'file_name', 'file_url', 'source_doctype', 'source_name',
+                 'source_record_title', 'source_category', 'partner', 'partner_name',
+                 'compliance_status', 'expiry_date', 'upload_date'],
         limit_page_length: 0
       }),
       // 4. Thematic areas (from custom_project_theme or Programme)
@@ -268,18 +268,24 @@
     STATE.ngoGrants = ngoGrants;
 
     // Build NGO → grant → docs map from Document Registry
+    // Doc Registry uses: source_doctype, source_name, partner (Link to NGO)
     var ngoGrantDocs = {};
     docRegistry.forEach(function(doc) {
-      // Docs attached to Grant, Fund Request, Quarterly Utilisation Report etc.
-      if (doc.attached_to_doctype === 'Grant' && doc.attached_to_name) {
-        // Find which NGO this grant belongs to
-        var gr = grants.find(function(g) { return g.name === doc.attached_to_name; });
+      // Docs linked to Grant via source_doctype
+      if (doc.source_doctype === 'Grant' && doc.source_name) {
+        var gr = grants.find(function(g) { return g.name === doc.source_name; });
         if (gr && gr.ngo) {
           var ngoId = gr.ngo;
           if (!ngoGrantDocs[ngoId]) ngoGrantDocs[ngoId] = {};
           if (!ngoGrantDocs[ngoId][gr.name]) ngoGrantDocs[ngoId][gr.name] = [];
           ngoGrantDocs[ngoId][gr.name].push(doc);
         }
+      }
+      // Also capture docs linked directly to partner NGO (not via Grant)
+      else if (doc.partner && !doc.source_doctype) {
+        if (!ngoGrantDocs[doc.partner]) ngoGrantDocs[doc.partner] = {};
+        if (!ngoGrantDocs[doc.partner]['_general']) ngoGrantDocs[doc.partner]['_general'] = [];
+        ngoGrantDocs[doc.partner]['_general'].push(doc);
       }
     });
     STATE.ngoGrantDocs = ngoGrantDocs;
@@ -524,7 +530,7 @@
           grantDocs.forEach(function(doc) {
             html += '<div class="expand-doc-card uploaded" data-action="view-grant-doc" data-doc-name="' + escAttr(doc.name) + '">'
                   + '<span class="expand-doc-icon" style="color:#16A34A;">✓</span>'
-                  + '<span class="expand-doc-label">' + escHtml(doc.file_name || doc.document_name || doc.name) + '</span>'
+                  + '<span class="expand-doc-label">' + escHtml(doc.file_name || doc.source_record_title || doc.name) + '</span>'
                   + '<span class="expand-doc-status" style="color:#16A34A;">View</span>'
                   + '</div>';
           });
@@ -627,7 +633,7 @@
         var docName = card.getAttribute('data-doc-name');
         var doc = (STATE.allNGOs.length > 0) ? findDocRegistryByName(docName) : null;
         if (doc) {
-          openSlideout(doc.file_name || doc.document_name, doc.file_url, doc.attached_to_name, doc.attached_to_doctype, doc.name);
+          openSlideout(doc.file_name || doc.source_record_title || doc.name, doc.file_url, doc.source_name || doc.partner_name || '', doc.source_doctype || 'Document Registry', doc.name);
         }
       });
     });
