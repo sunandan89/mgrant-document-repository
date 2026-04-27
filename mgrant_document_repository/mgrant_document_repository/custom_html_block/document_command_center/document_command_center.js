@@ -165,19 +165,22 @@
   // ══════════════════════════════════════════════════════════════
 
   // DD document fields from NGO Due Diligence DocType
-  // Each: { field, label, mandatory }
+  // Each: { field, label, mandatory, expiryField }
+  // expiryField maps to the date_of_expiry column for that document
   var DD_DOC_FIELDS = [
-    { field: 'pan',                       label: 'PAN',                   mandatory: true  },
-    { field: 'g80_certificate',           label: '80G Certificate',       mandatory: true  },
-    { field: 'a12_certificate',           label: '12A Certificate',       mandatory: true  },
-    { field: 'csr_1_form',               label: 'CSR-1 Form',            mandatory: true  },
-    { field: 'trust_deed',               label: 'Trust Deed / MoA',      mandatory: true  },
-    { field: 'fcra',                      label: 'FCRA',                  mandatory: false },
-    { field: 'gst',                       label: 'GST Certificate',       mandatory: false },
-    { field: 'yrs_balance_sheet',         label: 'Balance Sheet (3yr)',   mandatory: true  },
-    { field: 'yrs_annual_report',         label: 'Annual Report (3yr)',   mandatory: true  },
-    { field: 'code_of_conduct_attachment',label: 'Code of Conduct',       mandatory: false }
+    { field: 'pan',                       label: 'PAN',                   mandatory: true,  expiryField: 'date_of_expiry' },
+    { field: 'g80_certificate',           label: '80G Certificate',       mandatory: true,  expiryField: 'g80_date_of_expiry' },
+    { field: 'a12_certificate',           label: '12A Certificate',       mandatory: true,  expiryField: 'a12_date_of_expiry' },
+    { field: 'csr_1_form',               label: 'CSR-1 Form',            mandatory: true,  expiryField: 'csr_date_of_expiry' },
+    { field: 'trust_deed',               label: 'Trust Deed / MoA',      mandatory: true,  expiryField: 'trust_deed_date_of_expiry' },
+    { field: 'fcra',                      label: 'FCRA',                  mandatory: false, expiryField: 'fcra_date_of_expiry' },
+    { field: 'gst',                       label: 'GST Certificate',       mandatory: false, expiryField: 'gst_date_of_expiry' },
+    { field: 'yrs_balance_sheet',         label: 'Balance Sheet (3yr)',   mandatory: true,  expiryField: 'balance_sheet_date_of_expiry' },
+    { field: 'yrs_annual_report',         label: 'Annual Report (3yr)',   mandatory: true,  expiryField: 'annual_report_date_of_expiry' },
+    { field: 'code_of_conduct_attachment',label: 'Code of Conduct',       mandatory: false, expiryField: null }
   ];
+
+  var EXPIRY_WINDOW_DAYS = 60; // warn if expiring within this many days
 
   var MANDATORY_COUNT = DD_DOC_FIELDS.filter(function(d) { return d.mandatory; }).length;
 
@@ -212,16 +215,18 @@
 
   function loadData() {
     return Promise.all([
-      // 1. All NGO Due Diligence records
+      // 1. All NGO Due Diligence records (field is "ngo", not "ngo_partner")
       apiCall('frappe.client.get_list', {
         doctype: 'NGO Due Diligence',
-        fields: ['name', 'ngo_partner'].concat(DD_DOC_FIELDS.map(function(d) { return d.field; })),
+        fields: ['name', 'ngo', 'ngo_name', 'status', 'due_diligence_validation']
+          .concat(DD_DOC_FIELDS.map(function(d) { return d.field; }))
+          .concat(DD_DOC_FIELDS.filter(function(d) { return d.expiryField; }).map(function(d) { return d.expiryField; })),
         limit_page_length: 0
       }),
-      // 2. All Grants (to get NGO → grants mapping)
+      // 2. All Grants (field is "ngo", not "ngo_partner")
       apiCall('frappe.client.get_list', {
         doctype: 'Grant',
-        fields: ['name', 'ngo_partner', 'grant_name', 'status'],
+        fields: ['name', 'ngo', 'grant_name', 'grant_status'],
         filters: { docstatus: ['!=', 2] },
         limit_page_length: 0
       }),
@@ -252,13 +257,13 @@
     var docRegistry = results[2] || [];
     var themes = results[3] || [];
 
-    // Build NGO → grants map
+    // Build NGO → grants map (field is "ngo" on Grant DocType)
     var ngoGrants = {};
     grants.forEach(function(g) {
-      var ngo = g.ngo_partner;
-      if (!ngo) return;
-      if (!ngoGrants[ngo]) ngoGrants[ngo] = [];
-      ngoGrants[ngo].push(g);
+      var ngoId = g.ngo;
+      if (!ngoId) return;
+      if (!ngoGrants[ngoId]) ngoGrants[ngoId] = [];
+      ngoGrants[ngoId].push(g);
     });
     STATE.ngoGrants = ngoGrants;
 
@@ -269,20 +274,24 @@
       if (doc.attached_to_doctype === 'Grant' && doc.attached_to_name) {
         // Find which NGO this grant belongs to
         var gr = grants.find(function(g) { return g.name === doc.attached_to_name; });
-        if (gr && gr.ngo_partner) {
-          var ngo = gr.ngo_partner;
-          if (!ngoGrantDocs[ngo]) ngoGrantDocs[ngo] = {};
-          if (!ngoGrantDocs[ngo][gr.name]) ngoGrantDocs[ngo][gr.name] = [];
-          ngoGrantDocs[ngo][gr.name].push(doc);
+        if (gr && gr.ngo) {
+          var ngoId = gr.ngo;
+          if (!ngoGrantDocs[ngoId]) ngoGrantDocs[ngoId] = {};
+          if (!ngoGrantDocs[ngoId][gr.name]) ngoGrantDocs[ngoId][gr.name] = [];
+          ngoGrantDocs[ngoId][gr.name].push(doc);
         }
       }
     });
     STATE.ngoGrantDocs = ngoGrantDocs;
 
     // Process DD records — add computed compliance info
+    var today = new Date();
+    var expiryThreshold = new Date(today.getTime() + EXPIRY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+
     STATE.allNGOs = ddRecords.map(function(dd) {
       var mandatoryUploaded = 0;
       var totalUploaded = 0;
+      var expiringCount = 0;
       var docStates = {};
 
       DD_DOC_FIELDS.forEach(function(df) {
@@ -291,23 +300,45 @@
         if (hasFile) {
           totalUploaded++;
           if (df.mandatory) mandatoryUploaded++;
-          // TODO: check expiry from Statutory Documents master when seeded
-          docStates[df.field] = 'ok'; // uploaded & valid
+
+          // Check expiry date if available
+          var expiryVal = df.expiryField ? dd[df.expiryField] : null;
+          if (expiryVal) {
+            var expiryDate = new Date(expiryVal);
+            if (expiryDate <= today) {
+              // Already expired — treat as missing for mandatory
+              docStates[df.field] = df.mandatory ? 'missing' : 'optional_missing';
+              if (df.mandatory) mandatoryUploaded--;
+              totalUploaded--;
+            } else if (expiryDate <= expiryThreshold) {
+              docStates[df.field] = 'expiring';
+              expiringCount++;
+            } else {
+              docStates[df.field] = 'ok';
+            }
+          } else {
+            docStates[df.field] = 'ok';
+          }
         } else {
           docStates[df.field] = df.mandatory ? 'missing' : 'optional_missing';
         }
       });
 
       var score = MANDATORY_COUNT > 0 ? Math.round((mandatoryUploaded / MANDATORY_COUNT) * 100) : 0;
-      var grantCount = (ngoGrants[dd.ngo_partner] || []).length;
+      // Use dd.ngo (Link field to NGO DocType)
+      var ngoId = dd.ngo || '';
+      var ngoLabel = dd.ngo_name || ngoId || dd.name;
+      var grantCount = (ngoGrants[ngoId] || []).length;
 
       return {
         name: dd.name,
-        ngo_partner: dd.ngo_partner,
+        ngo: ngoId,
+        ngo_label: ngoLabel,
         score: score,
         mandatoryUploaded: mandatoryUploaded,
         mandatoryTotal: MANDATORY_COUNT,
         totalUploaded: totalUploaded,
+        expiringCount: expiringCount,
         docStates: docStates,
         grantCount: grantCount,
         raw: dd
@@ -332,8 +363,9 @@
     var total = ngos.length;
     var fullyCompliant = ngos.filter(function(n) { return n.score === 100; }).length;
     var complianceRate = total > 0 ? Math.round((fullyCompliant / total) * 100) : 0;
-    var expiring = 0; // TODO: compute from expiry dates when Statutory Docs master is seeded
+    var expiring = 0;
     var missingMandatory = 0;
+    ngos.forEach(function(n) { expiring += n.expiringCount; });
     ngos.forEach(function(n) {
       missingMandatory += (n.mandatoryTotal - n.mandatoryUploaded);
     });
@@ -387,7 +419,7 @@
       html += '<tr id="' + rowId + '">';
       html += '<td class="stf-frozen stf-frozen-last ngo-name-cell" data-ngo-idx="' + idx + '">'
             + '<span class="expand-arrow' + (isExpanded ? ' open' : '') + '">&#9654;</span>'
-            + escHtml(ngo.ngo_partner || ngo.name)
+            + escHtml(ngo.ngo_label)
             + (ngo.grantCount > 0 ? ' <span style="font-size:11px;color:#6B7280;">(' + ngo.grantCount + ' grant' + (ngo.grantCount > 1 ? 's' : '') + ')</span>' : '')
             + '</td>';
 
@@ -478,7 +510,7 @@
     html += '</div>';
 
     // Section 2: Grant-wise Documents (if NGO has grants)
-    var grants = STATE.ngoGrants[ngo.ngo_partner] || [];
+    var grants = STATE.ngoGrants[ngo.ngo] || [];
     if (grants.length > 0) {
       grants.forEach(function(grant) {
         var grantLabel = grant.grant_name || grant.name;
@@ -486,7 +518,7 @@
               + 'Grant Documents <span class="grant-badge">' + escHtml(grantLabel) + '</span>'
               + '</div>';
 
-        var grantDocs = (STATE.ngoGrantDocs[ngo.ngo_partner] || {})[grant.name] || [];
+        var grantDocs = (STATE.ngoGrantDocs[ngo.ngo] || {})[grant.name] || [];
         if (grantDocs.length > 0) {
           html += '<div class="expand-doc-grid">';
           grantDocs.forEach(function(doc) {
@@ -507,7 +539,7 @@
     var allFiles = collectNgoFiles(ngo);
     if (allFiles.length > 0) {
       html += '<div class="expand-actions">';
-      html += '<button class="btn-primary" data-action="zip-ngo" data-ngo-name="' + escAttr(ngo.ngo_partner || ngo.name) + '">Download All as ZIP (' + allFiles.length + ' files)</button>';
+      html += '<button class="btn-primary" data-action="zip-ngo" data-ngo-name="' + escAttr(ngo.ngo_label) + '">Download All as ZIP (' + allFiles.length + ' files)</button>';
       html += '</div>';
     }
 
@@ -525,9 +557,9 @@
       }
     });
     // Grant docs
-    var grants = STATE.ngoGrants[ngo.ngo_partner] || [];
+    var grants = STATE.ngoGrants[ngo.ngo] || [];
     grants.forEach(function(grant) {
-      var gDocs = (STATE.ngoGrantDocs[ngo.ngo_partner] || {})[grant.name] || [];
+      var gDocs = (STATE.ngoGrantDocs[ngo.ngo] || {})[grant.name] || [];
       gDocs.forEach(function(doc) {
         if (doc.file_url) {
           files.push({ file_name: doc.file_name || doc.name, file_url: doc.file_url });
@@ -584,7 +616,7 @@
         var fileUrl = ngo.raw[field];
         if (!fileUrl) return;
 
-        openSlideout(df.label, fileUrl, ngo.ngo_partner || ngo.name, 'NGO Due Diligence', ngo.name);
+        openSlideout(df.label, fileUrl, ngo.ngo_label, 'NGO Due Diligence', ngo.name);
       });
     });
 
@@ -605,7 +637,7 @@
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var ngoName = btn.getAttribute('data-ngo-name');
-        var ngo = STATE.allNGOs.find(function(n) { return (n.ngo_partner || n.name) === ngoName; });
+        var ngo = STATE.allNGOs.find(function(n) { return n.ngo_label === ngoName; });
         if (!ngo) return;
         var files = collectNgoFiles(ngo);
         var origText = btn.textContent;
@@ -753,7 +785,7 @@
     // Fuzzy search
     if (search) {
       filtered = fuzzyFilterRecords(filtered, search, function(ngo) {
-        return [ngo.ngo_partner || '', ngo.name || ''];
+        return [ngo.ngo_label || '', ngo.ngo || '', ngo.name || ''];
       });
     }
 
@@ -817,7 +849,7 @@
       // Data rows
       STATE.filteredNGOs.forEach(function(ngo) {
         var row = [
-          sc(ngo.ngo_partner || ngo.name),
+          sc(ngo.ngo_label),
           sc(ngo.score, { numFmt: '0"%"' })
         ];
         DD_DOC_FIELDS.forEach(function(df) {
