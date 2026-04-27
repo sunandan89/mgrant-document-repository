@@ -1,0 +1,138 @@
+<!-- Document Command Center — CHB html field -->
+<!-- Phase 1: NGO Partners Compliance Matrix -->
+
+<div id="dcc-root">
+  <!-- Loading skeleton -->
+  <div id="dcc-loading">
+    <div class="skeleton-strip"></div>
+    <div class="skeleton-kpi-row">
+      <div class="skeleton-kpi"></div>
+      <div class="skeleton-kpi"></div>
+      <div class="skeleton-kpi"></div>
+      <div class="skeleton-kpi"></div>
+    </div>
+    <div class="skeleton-table"></div>
+  </div>
+
+  <!-- Main content (hidden until loaded) -->
+  <div id="dcc-main" style="display:none">
+
+    <!-- Top Tab Bar -->
+    <nav id="dcc-tabs" class="top-tabs">
+      <button class="tab active" data-tab="ngo">NGO Partners</button>
+      <button class="tab" data-tab="grants">Grants</button>
+      <button class="tab" data-tab="gaf">GAF / Proposals</button>
+      <button class="tab" data-tab="vendors">Vendors</button>
+    </nav>
+
+    <!-- ═══ NGO Partners Tab ═══ -->
+    <div id="tab-ngo" class="tab-pane">
+
+      <!-- Filter Strip -->
+      <div class="filter-strip">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="search" id="ngo-search" placeholder="Search NGOs…" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label>Thematic Area</label>
+          <select id="ngo-filter-theme"><option value="">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Compliance</label>
+          <select id="ngo-filter-compliance">
+            <option value="">All</option>
+            <option value="full">Fully Compliant</option>
+            <option value="partial">Partial</option>
+            <option value="critical">Critical Gaps</option>
+          </select>
+        </div>
+        <div class="filter-group filter-actions">
+          <button id="ngo-export-xlsx" class="btn-secondary" title="Export to Excel">Export</button>
+          <button id="ngo-reset" class="btn-ghost" style="display:none">Reset <span id="ngo-filter-count" class="badge">0</span></button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row" id="ngo-kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap info"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a3 3 0 100 6 3 3 0 000-6zM4 14c0-2.21 2.69-4 6-4s6 1.79 6 4v2H4v-2z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-total-ngos">0</div>
+          <div class="kpi-label">Total NGO Partners</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap success"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-compliance-rate">0%</div>
+          <div class="kpi-label">Compliance Rate</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap warning"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-6a1 1 0 00-1 1v3a1 1 0 002 0V8a1 1 0 00-1-1z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-expiring">0</div>
+          <div class="kpi-label">Expiring (60 days)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap danger"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-missing">0</div>
+          <div class="kpi-label">Missing Mandatory</div>
+        </div>
+      </div>
+
+      <!-- Compliance Matrix Table -->
+      <div class="table-card">
+        <div class="stf-scroll-container" id="ngo-matrix-scroll">
+          <table class="stf-table" id="ngo-matrix">
+            <thead id="ngo-matrix-head"></thead>
+            <tbody id="ngo-matrix-body"></tbody>
+          </table>
+        </div>
+        <div id="ngo-empty" class="empty-state" style="display:none">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="4" stroke="#D1D5DB" stroke-width="2" fill="none"/><path d="M20 28h24M20 36h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+          <div class="empty-headline">No NGO partners found</div>
+          <div class="empty-sub">Try adjusting your search or filters</div>
+        </div>
+        <div id="ngo-table-footer" class="table-footer" style="display:none">
+          <span id="ngo-showing"></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ Placeholder Tabs ═══ -->
+    <div id="tab-grants" class="tab-pane" style="display:none">
+      <div class="phase-placeholder">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="4" y="8" width="40" height="32" rx="4" stroke="#D1D5DB" stroke-width="2"/><path d="M12 20h24M12 28h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="placeholder-title">Grant Document Timeline</div>
+        <div class="placeholder-sub">Coming in Phase 2 — Phase-grouped document timeline with module-aware rendering and reporting schedule integration</div>
+      </div>
+    </div>
+    <div id="tab-gaf" class="tab-pane" style="display:none">
+      <div class="phase-placeholder">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="4" y="8" width="40" height="32" rx="4" stroke="#D1D5DB" stroke-width="2"/><path d="M12 20h24M12 28h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="placeholder-title">GAF / Proposals &amp; MoU Tracker</div>
+        <div class="placeholder-sub">Coming in Phase 3 — MoU status tracker with expandable rows showing Draft and Signed MoU document cards</div>
+      </div>
+    </div>
+    <div id="tab-vendors" class="tab-pane" style="display:none">
+      <div class="phase-placeholder">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="4" y="8" width="40" height="32" rx="4" stroke="#D1D5DB" stroke-width="2"/><path d="M12 20h24M12 28h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="placeholder-title">Vendor Compliance Matrix</div>
+        <div class="placeholder-sub">Coming in Phase 3 — Full compliance matrix with expandable vendor rows and cell-state indicators</div>
+      </div>
+    </div>
+
+    <!-- ═══ Document Slideout ═══ -->
+    <div id="dcc-slideout" class="slideout-overlay" style="display:none">
+      <div class="slideout-panel">
+        <div class="slideout-header">
+          <div class="slideout-title" id="slideout-title"></div>
+          <button class="slideout-close" id="slideout-close">&times;</button>
+        </div>
+        <div class="slideout-body" id="slideout-body"></div>
+      </div>
+    </div>
+
+    <!-- ═══ NGO Expand Panel (inline below row) ═══ -->
+    <!-- Rendered dynamically -->
+
+  </div>
+</div>
