@@ -1,0 +1,322 @@
+<!-- Document Command Center — CHB html field -->
+<!-- Phase 1: NGO Partners Compliance Matrix -->
+
+<div id="dcc-root">
+  <!-- Loading skeleton -->
+  <div id="dcc-loading">
+    <div class="skeleton-strip"></div>
+    <div class="skeleton-kpi-row">
+      <div class="skeleton-kpi"></div>
+      <div class="skeleton-kpi"></div>
+      <div class="skeleton-kpi"></div>
+      <div class="skeleton-kpi"></div>
+    </div>
+    <div class="skeleton-table"></div>
+  </div>
+
+  <!-- Main content (hidden until loaded) -->
+  <div id="dcc-main" style="display:none">
+
+    <!-- Top Tab Bar -->
+    <nav id="dcc-tabs" class="top-tabs">
+      <button class="tab active" data-tab="ngo">NGO Partners</button>
+      <button class="tab" data-tab="grants">Grants</button>
+      <button class="tab" data-tab="gaf">GAF / Proposals</button>
+      <button class="tab" data-tab="vendors">Vendors</button>
+    </nav>
+
+    <!-- ═══ NGO Partners Tab ═══ -->
+    <div id="tab-ngo" class="tab-pane">
+
+      <!-- Filter Strip -->
+      <div class="filter-strip">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="search" id="ngo-search" placeholder="Search NGOs…" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label>Thematic Area</label>
+          <select id="ngo-filter-theme"><option value="">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Compliance</label>
+          <select id="ngo-filter-compliance">
+            <option value="">All</option>
+            <option value="full">Fully Compliant</option>
+            <option value="partial">Partial</option>
+            <option value="critical">Critical Gaps</option>
+          </select>
+        </div>
+        <div class="filter-group filter-actions">
+          <button id="ngo-export-xlsx" class="btn-secondary" title="Export to Excel">Export</button>
+          <button id="ngo-reset" class="btn-ghost" style="display:none">Reset <span id="ngo-filter-count" class="badge">0</span></button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row" id="ngo-kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap info"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a3 3 0 100 6 3 3 0 000-6zM4 14c0-2.21 2.69-4 6-4s6 1.79 6 4v2H4v-2z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-total-ngos">0</div>
+          <div class="kpi-label">Total NGO Partners</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap success"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-compliance-rate">0%</div>
+          <div class="kpi-label">Compliance Rate</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap warning"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-6a1 1 0 00-1 1v3a1 1 0 002 0V8a1 1 0 00-1-1z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-expiring">0</div>
+          <div class="kpi-label">Expiring (60 days)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap danger"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-missing">0</div>
+          <div class="kpi-label">Missing Mandatory</div>
+        </div>
+      </div>
+
+      <!-- Compliance Matrix Table -->
+      <div class="table-card">
+        <div class="stf-scroll-container" id="ngo-matrix-scroll">
+          <table class="stf-table" id="ngo-matrix">
+            <thead id="ngo-matrix-head"></thead>
+            <tbody id="ngo-matrix-body"></tbody>
+          </table>
+        </div>
+        <div id="ngo-empty" class="empty-state" style="display:none">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="4" stroke="#D1D5DB" stroke-width="2" fill="none"/><path d="M20 28h24M20 36h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+          <div class="empty-headline">No NGO partners found</div>
+          <div class="empty-sub">Try adjusting your search or filters</div>
+        </div>
+        <div id="ngo-table-footer" class="table-footer" style="display:none">
+          <span id="ngo-showing"></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ Grants Tab ═══ -->
+    <div id="tab-grants" class="tab-pane" style="display:none">
+
+      <!-- Filter Strip -->
+      <div class="filter-strip">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="search" id="grant-search" placeholder="Search grants…" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label>Grant Status</label>
+          <select id="grant-filter-status">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <div class="filter-group filter-actions">
+          <button id="grant-reset" class="btn-ghost" style="display:none">Reset <span id="grant-filter-count" class="badge">0</span></button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row" id="grant-kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap info"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 4h12" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-total-grants">0</div>
+          <div class="kpi-label">Active Grants</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap success"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M9 2v6h6M9 2L3 8v9a1 1 0 001 1h12a1 1 0 001-1V3a1 1 0 00-1-1H9z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-grant-docs">0</div>
+          <div class="kpi-label">Grant Documents</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap warning"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 4v4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-reports-due">0</div>
+          <div class="kpi-label">Reports Due / Overdue</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap danger"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-reports-submitted">0</div>
+          <div class="kpi-label">Reports Submitted</div>
+        </div>
+      </div>
+
+      <!-- Grant Cards Container -->
+      <div id="grant-cards-container" class="grant-cards-container"></div>
+
+      <!-- Empty State -->
+      <div id="grant-empty" class="empty-state" style="display:none">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="4" stroke="#D1D5DB" stroke-width="2" fill="none"/><path d="M20 28h24M20 36h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="empty-headline">No grants found</div>
+        <div class="empty-sub">Try adjusting your search or filters</div>
+      </div>
+
+      <!-- Footer -->
+      <div id="grant-table-footer" class="table-footer" style="display:none">
+        <span id="grant-showing"></span>
+      </div>
+
+    </div>
+    <!-- ═══ GAF / Proposals Tab ═══ -->
+    <div id="tab-gaf" class="tab-pane" style="display:none">
+
+      <!-- Filter Strip -->
+      <div class="filter-strip">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="search" id="gaf-search" placeholder="Search proposals…" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label>Workflow Status</label>
+          <select id="gaf-filter-wfstate">
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="in_review">Under Review</option>
+            <option value="rejected">Rejected</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>MoU Status</label>
+          <select id="gaf-filter-mou">
+            <option value="">All</option>
+            <option value="signed">MoU Signed</option>
+            <option value="draft_only">Draft Only</option>
+            <option value="none">No MoU</option>
+          </select>
+        </div>
+        <div class="filter-group filter-actions">
+          <button id="gaf-reset" class="btn-ghost" style="display:none">Reset <span id="gaf-filter-count" class="badge">0</span></button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row" id="gaf-kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap info"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M9 2v6h6M9 2L3 8v9a1 1 0 001 1h12a1 1 0 001-1V3a1 1 0 00-1-1H9z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-total-gafs">0</div>
+          <div class="kpi-label">Total GAFs</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap success"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-gafs-approved">0</div>
+          <div class="kpi-label">Approved</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap warning"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 4v4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-gafs-review">0</div>
+          <div class="kpi-label">Under Review</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap purple"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 4h12" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-gafs-mou">0</div>
+          <div class="kpi-label">MoU Signed</div>
+        </div>
+      </div>
+
+      <!-- Proposal Cards Container -->
+      <div id="gaf-cards-container" class="gaf-cards-container"></div>
+
+      <!-- Empty State -->
+      <div id="gaf-empty" class="empty-state" style="display:none">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="4" stroke="#D1D5DB" stroke-width="2" fill="none"/><path d="M20 28h24M20 36h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="empty-headline">No proposals found</div>
+        <div class="empty-sub">Try adjusting your search or filters</div>
+      </div>
+
+      <!-- Footer -->
+      <div id="gaf-table-footer" class="table-footer" style="display:none">
+        <span id="gaf-showing"></span>
+      </div>
+
+    </div>
+    <!-- ═══ Vendors Tab ═══ -->
+    <div id="tab-vendors" class="tab-pane" style="display:none">
+
+      <!-- Filter Strip -->
+      <div class="filter-strip">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="search" id="vendor-search" placeholder="Search vendors…" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label>DD Status</label>
+          <select id="vendor-filter-dd">
+            <option value="">All</option>
+            <option value="Yes">DD Cleared</option>
+            <option value="No">DD Not Cleared</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Vendor Status</label>
+          <select id="vendor-filter-status">
+            <option value="">All</option>
+            <option value="Current Grantee">Current Grantee</option>
+            <option value="Prospect">Prospect</option>
+            <option value="Former Grantee">Former Grantee</option>
+          </select>
+        </div>
+        <div class="filter-group filter-actions">
+          <button id="vendor-reset" class="btn-ghost" style="display:none">Reset <span id="vendor-filter-count" class="badge">0</span></button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row" id="vendor-kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap info"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 3h14a2 2 0 012 2v10a2 2 0 01-2 2H3a2 2 0 01-2-2V5a2 2 0 012-2zm0 6h14" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-total-vendors">0</div>
+          <div class="kpi-label">Total Vendors</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap success"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-vendor-dd-cleared">0</div>
+          <div class="kpi-label">DD Cleared</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap warning"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M9 2v6h6M9 2L3 8v9a1 1 0 001 1h12a1 1 0 001-1V3a1 1 0 00-1-1H9z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="kpi-number" id="kpi-vendor-docs">0</div>
+          <div class="kpi-label">Docs Uploaded</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap danger"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" fill="currentColor"/></svg></div>
+          <div class="kpi-number" id="kpi-vendor-missing">0</div>
+          <div class="kpi-label">Missing Docs</div>
+        </div>
+      </div>
+
+      <!-- Vendor Cards Container -->
+      <div id="vendor-cards-container" class="vendor-cards-container"></div>
+
+      <!-- Empty State -->
+      <div id="vendor-empty" class="empty-state" style="display:none">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="4" stroke="#D1D5DB" stroke-width="2" fill="none"/><path d="M20 28h24M20 36h16" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="empty-headline">No vendors found</div>
+        <div class="empty-sub">Try adjusting your search or filters</div>
+      </div>
+
+      <!-- Footer -->
+      <div id="vendor-table-footer" class="table-footer" style="display:none">
+        <span id="vendor-showing"></span>
+      </div>
+
+    </div>
+
+    <!-- ═══ Document Slideout ═══ -->
+    <div id="dcc-slideout" class="slideout-overlay" style="display:none">
+      <div class="slideout-panel">
+        <div class="slideout-header">
+          <div class="slideout-title" id="slideout-title"></div>
+          <button class="slideout-close" id="slideout-close">&times;</button>
+        </div>
+        <div class="slideout-body" id="slideout-body"></div>
+      </div>
+    </div>
+
+    <!-- ═══ NGO Expand Panel (inline below row) ═══ -->
+    <!-- Rendered dynamically -->
+
+  </div>
+</div>
